@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta http-equiv="Content-Type" content="text/html" charset="utf-8"/>
+        <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, minimal-ui">
+        <title>Babylon</title>
+        <script src="https://preview.babylonjs.com/babylon.js"></script>
+        <script src="https://preview.babylonjs.com/loaders/babylonjs.loaders.min.js"></script>
+        <script src="https://code.jquery.com/pep/0.4.1/pep.js"></script>
+    </head>
+    <body>
+        <canvas id="renderCanvas"></canvas>
+        <div id="infoElement"></div>
+    </body>
+</html>
+
+<style>
+    html, body {
+        overflow: hidden;
+        width   : 100%;
+        height  : 100%;
+        margin  : 0;
+        padding : 0;
+    }
+    #renderCanvas {
+        width   : 100%;
+        height  : 100%;
+        touch-action: none;
+    }
+    #infoElement {
+        position: absolute;
+        right: 0;
+        top: 0;
+        color: white;
+        background-color: black;
+    }
+</style>
+
+<script>
+var canvas = document.getElementById('renderCanvas');
+var engine = new BABYLON.Engine(canvas, true);
+var scene = new BABYLON.Scene(engine);
+
+var camera = new BABYLON.FreeCamera('camera', new BABYLON.Vector3(0, 5,-10), scene);
+camera.setTarget(BABYLON.Vector3.Zero());
+camera.attachControl(canvas, false);
+camera.keysUp.push(87); 
+camera.keysLeft.push(65);
+camera.keysRight.push(68);
+camera.keysDown.push(83);
+
+var light = new BABYLON.HemisphericLight('light1', new BABYLON.Vector3(0,1,0), scene);
+
+BABYLON.SceneLoader.Append("gltf/overhead-mep-installation/", "scene.gltf", scene, function (scene) {
+    scene.meshes[0].position = new BABYLON.Vector3(0, -200, 0);
+    // TODO 60 FPS sind möglich! Habs im Babylon Playground getestet
+    // siehe https://forum.babylonjs.com/t/sloooow-wheel-zoom-on-a-real-size-building-scene/4005/4
+    // Find aber irgendwie die Funktion zum Normalisieren nicht, muss es ja aber geben
+    // (auch ohne Flackern wie bei Xeogl)
+})
+
+
+engine.runRenderLoop(function() {
+    scene.render();
+    infoElement.innerHTML = engine.getFps().toFixed() + " fps";
+});
+</script>

@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, minimal-ui">
+    
+        <title>Xeogl</title>
+        <script src="lib/xeogl.js"></script>
+        <script src="lib/xeoglGlTF.js"></script>
+    </head>
+    <body>
+        <div id="infoElement"></div>
+
+    </body>
+</html>
+
+<style>
+    html, body {
+        /*width   : 100%;
+        height  : 100%; dont set these two otherwise the controls are not working anymore*/
+        margin  : 0;
+        padding : 0;
+    }
+    #infoElement {
+        position: absolute;
+        right: 0;
+        top: 0;
+        color: white;
+        background-color: black;
+    }
+</style>
+
+<script>
+var model = new xeogl.GLTFModel({
+    id: "room",
+    src: "gltf/overhead-mep-installation/scene.gltf",
+    combineGeometry: true,
+    quantizeGeometry: true,
+    lambertMaterials: true, 
+});
+
+model.on("loaded", function() {
+    var cameraFlight = new xeogl.CameraFlightAnimation();
+    cameraFlight.flyTo(model);
+});
+
+var scene = model.scene;
+scene.backgroundColor = [1, 0, 0, 1] // not working, "fix": new xeogl.AmbientLight({ color: [.7, .9, 1.0], intensity: 0.1 });
+
+var camera = scene.camera;
+camera.eye = [2.44, 0, 4.24];
+camera.look = [0, 0, 0];
+camera.up = [0, 1, 0];
+
+scene.on("tick", function () { 
+    infoElement.innerHTML = xeogl.stats.frame.fps
+});
+
+var cameraControl = new xeogl.CameraControl({firstPerson: true});
+
+</script>
