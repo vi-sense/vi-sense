@@ -1,4 +1,12 @@
-on: [push, pull_request]
+on:
+  push:
+    branches:
+      - master
+      - minimal_go_server
+  pull_request:
+    branches:
+      - master
+      - minimal_go_server
 name: Test
 jobs:
   test:
