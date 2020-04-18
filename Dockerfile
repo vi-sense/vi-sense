@@ -1,3 +1,4 @@
+#source: https://github.com/chemidy/smallest-secured-golang-docker-image/blob/master/go_module/Dockerfile
 ############################
 # STEP 1 build executable binary
 ############################
