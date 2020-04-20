@@ -1,67 +1,111 @@
 <!DOCTYPE html>
 <html>
-    <head>
-        <meta http-equiv="Content-Type" content="text/html" charset="utf-8"/>
-        <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, minimal-ui">
-        <title>Babylon</title>
-        <script src="https://preview.babylonjs.com/babylon.js"></script>
-        <script src="https://preview.babylonjs.com/loaders/babylonjs.loaders.min.js"></script>
-        <script src="https://code.jquery.com/pep/0.4.1/pep.js"></script>
-    </head>
-    <body>
-        <canvas id="renderCanvas"></canvas>
-        <div id="infoElement"></div>
-    </body>
+  <head>
+    <meta http-equiv="Content-Type" content="text/html" charset="utf-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, minimal-ui">
+    <title>Babylon</title>
+    <script src="https://preview.babylonjs.com/babylon.js"></script>
+    <script src="https://preview.babylonjs.com/loaders/babylonjs.loaders.min.js"></script>
+    <script src="https://code.jquery.com/pep/0.4.1/pep.js"></script>
+  </head>
+  <body>
+    <canvas id="renderCanvas"></canvas>
+    <div id="infoElement"></div>
+    <button id="button" type="button" name="button">Change color</button>
+  </body>
 </html>
 
 <style>
-    html, body {
-        overflow: hidden;
-        width   : 100%;
-        height  : 100%;
-        margin  : 0;
-        padding : 0;
-    }
-    #renderCanvas {
-        width   : 100%;
-        height  : 100%;
-        touch-action: none;
-    }
-    #infoElement {
-        position: absolute;
-        right: 0;
-        top: 0;
-        color: white;
-        background-color: black;
-    }
+  body,
+  html {
+    overflow: hidden;
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    padding: 0;
+  }
+  #renderCanvas {
+    width: 100%;
+    height: 100%;
+    touch-action: none;
+  }
+  #infoElement {
+    position: absolute;
+    right: 0;
+    top: 0;
+    color: white;
+    background-color: rgba(0,0,0,0.3);
+    padding: 5px;
+    font-family: 'Helvetica', sans-serif;
+  }
+  #button {
+    position: absolute;
+    left: 0;
+    bottom: 0;
+  }
 </style>
 
 <script>
-var canvas = document.getElementById('renderCanvas');
-var engine = new BABYLON.Engine(canvas, true);
-var scene = new BABYLON.Scene(engine);
+  var canvas = document.getElementById('renderCanvas');
+  var engine = new BABYLON.Engine(canvas, true);
+  var scene = new BABYLON.Scene(engine);
 
-var camera = new BABYLON.FreeCamera('camera', new BABYLON.Vector3(0, 5,-10), scene);
-camera.setTarget(BABYLON.Vector3.Zero());
-camera.attachControl(canvas, false);
-camera.keysUp.push(87); 
-camera.keysLeft.push(65);
-camera.keysRight.push(68);
-camera.keysDown.push(83);
+  var camera = new BABYLON.FreeCamera('camera', new BABYLON.Vector3(0, 5, -10), scene);
+  camera.setTarget(BABYLON.Vector3.Zero());
+  camera.attachControl(canvas, false);
+  camera.keysUp.push(87);
+  camera.keysLeft.push(65);
+  camera.keysRight.push(68);
+  camera.keysDown.push(83);
 
-var light = new BABYLON.HemisphericLight('light1', new BABYLON.Vector3(0,1,0), scene);
+  var light = new BABYLON.HemisphericLight('light1', new BABYLON.Vector3(0, 1, 0), scene);
 
-BABYLON.SceneLoader.Append("gltf/overhead-mep-installation/", "scene.gltf", scene, function (scene) {
-    scene.meshes[0].position = new BABYLON.Vector3(0, -200, 0);
-    // TODO 60 FPS sind möglich! Habs im Babylon Playground getestet
-    // siehe https://forum.babylonjs.com/t/sloooow-wheel-zoom-on-a-real-size-building-scene/4005/4
-    // Find aber irgendwie die Funktion zum Normalisieren nicht, muss es ja aber geben
-    // (auch ohne Flackern wie bei Xeogl)
-})
+  let mesh, defaultMat;
 
+  BABYLON.SceneLoader.Append("gltf/mep-building-model/", "scene.gltf", scene, function (scene) {
+    scene.meshes[0].position = new BABYLON.Vector3(75, 0, -40);
+    mesh = scene.getMeshByName("node11");
+    defaultColor = mesh._material._albedoColor;
+    console.log(defaultColor);
+  });
 
-engine.runRenderLoop(function() {
+  var button = document.getElementById('button');
+  button.addEventListener('click', function () {
+    console.log("mesh: ", mesh._material);
+    if (mesh.state == "") {
+      mesh._material._albedoColor = BABYLON.Color3.Yellow();
+      mesh._material._alpha = 1.0;
+      mesh._material._metallic = 0;
+      mesh._material._roughness = 1;
+      mesh.state = "selected";
+    } else {
+      mesh._material._albedoColor = defaultColor;
+      mesh._material._alpha = 1.0
+      mesh._material._metallic = 1;
+      mesh._material._roughness = 0.4;
+      mesh.state = "";
+    }
+  })
+
+  window.addEventListener("click", function () {
+    var pickResult = scene.pick(scene.pointerX, scene.pointerY);
+    if (pickResult.pickedMesh != null) {
+      console.log(pickResult.pickedMesh)
+      Math.floor(Math.random())
+      pickResult.pickedMesh._material._albedoColor = new BABYLON.Color3(Math.random(), Math.random(), Math.random())
+      //pickResult.pickedMesh._material._albedoTexture = new BABYLON.Texture("https://asset.naker.io/image/test/Luntai_10012_M_baseColor.png", scene);
+      pickResult.pickedMesh._material._alpha = 1.0;
+      pickResult.pickedMesh._material._metallic = 0;
+      pickResult.pickedMesh._material._roughness = 1;
+    }
+  });
+
+  window.addEventListener('resize', function () {
+    engine.resize();
+  });
+
+  engine.runRenderLoop(function () {
     scene.render();
     infoElement.innerHTML = engine.getFps().toFixed() + " fps";
-});
+  });
 </script>
