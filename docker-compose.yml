@@ -1,0 +1,11 @@
+# https://medium.com/analytics-vidhya/getting-started-with-postgresql-using-docker-compose-34d6b808c47c
+version: '3'
+services:
+  database:
+    image: "postgres" # use latest official postgres version
+    env_file:
+      - database.env # configure postgres
+    volumes:
+      - ./database/:/var/lib/postgresql/data/ # persist data even if container shuts down (data is saved to ./database)
+    ports:
+      - "32300:5432"
