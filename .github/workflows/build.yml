@@ -19,7 +19,8 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v2
       - name: Test
-        run: go test ./app/...
+        run: go test ./...
+        working-directory: ./app
       - name: BuildPush
         if: success()
         uses: docker/build-push-action@v1

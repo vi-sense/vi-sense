@@ -8,7 +8,6 @@ import (
 
 	"github.com/jinzhu/gorm"
 	_ "github.com/jinzhu/gorm/dialects/postgres"
-	"github.com/joho/godotenv"
 )
 
 type RoomModel struct {
@@ -40,17 +39,17 @@ var db *gorm.DB
 
 func setupDatabase(drop bool) {
 	// load env file
-	err := godotenv.Load("../database.env")
-	if err != nil {
-		fmt.Println(err)
-		panic("[!] Please create a 'database.env' file and prepare the needed variables.")
-	}
+	//err := godotenv.Load("../database.env")
+	//if err != nil {
+	//	fmt.Println(err)
+	//	panic("[!] Please create a 'database.env' file and prepare the needed variables.")
+	//}
 
 	// TODO check if sslmode can be enabled later
 	dbinfo := fmt.Sprintf("host=localhost port=32300 user=%s dbname=%s password=%s sslmode=disable",
 		os.Getenv("POSTGRES_USER"), os.Getenv("POSTGRES_DB"), os.Getenv("POSTGRES_PASSWORD"))
 
-	db, err = gorm.Open("postgres", dbinfo)
+	db, err := gorm.Open("postgres", dbinfo)
 
 	if err != nil {
 		fmt.Println(err)
