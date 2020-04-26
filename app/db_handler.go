@@ -142,5 +142,5 @@ func createMockData() {
 	}
 
 	db.Create(&s1)
-	fmt.Println("[✓] mock sensor w/ data created\n")
+	fmt.Println("[✓] mock sensor w/ data created")
 }
