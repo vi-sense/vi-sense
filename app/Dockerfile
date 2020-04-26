@@ -32,7 +32,7 @@ ENV GO111MODULE=on
 RUN go mod download
 RUN go mod verify
 
-COPY . .
+COPY .. .
 
 # Build the binary
 RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build \

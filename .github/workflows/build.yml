@@ -19,12 +19,13 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v2
       - name: Test
-        run: go test ./...
+        run: go test ./app/...
       - name: BuildPush
         if: success()
         uses: docker/build-push-action@v1
         with:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_ACCESS_TOKEN }}
+          path: ./app
           repository: romankrajewski/visense
           tags: latest

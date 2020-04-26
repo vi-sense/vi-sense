@@ -1,4 +1,4 @@
-module github.com/vi-sense/vi-sense
+module github.com/vi-sense/vi-sense/app
 
 go 1.14
 
