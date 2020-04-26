@@ -1,0 +1,5 @@
+version: '3'
+services:
+  web:
+    build: ./app # use this line to build the app locally
+    image: visense-dev

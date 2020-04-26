@@ -1,0 +1,8 @@
+version: '3'
+services:
+  watchtower: #service that automatically checks for new docker images. not needed if you run this app locally.
+    image: containrrr/watchtower
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - /root/.docker/config.json:/config.json
+    command: --interval 300 #check for updates every 5 minutes

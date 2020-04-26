@@ -46,13 +46,14 @@ func setupDatabase(drop bool) {
 	//}
 
 	// TODO check if sslmode can be enabled later
-	dbinfo := fmt.Sprintf("host=localhost port=32300 user=%s dbname=%s password=%s sslmode=disable",
-		os.Getenv("POSTGRES_USER"), os.Getenv("POSTGRES_DB"), os.Getenv("POSTGRES_PASSWORD"))
-
-	db, err := gorm.Open("postgres", dbinfo)
+	dbinfo := fmt.Sprintf("host=%s port=%s user=%s dbname=%s password=%s sslmode=disable",
+		os.Getenv("POSTGRES_HOST"), os.Getenv("POSTGRES_PORT"), os.Getenv("POSTGRES_USER"), os.Getenv("POSTGRES_DB"), os.Getenv("POSTGRES_PASSWORD"))
+	var err error
+	db, err = gorm.Open("postgres", dbinfo)
 
 	if err != nil {
 		fmt.Println(err)
+		fmt.Print(dbinfo)
 		panic("[!] failed to connect to db")
 	} else {
 		fmt.Println("[✓] successfully connected to db")
