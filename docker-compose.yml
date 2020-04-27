@@ -12,6 +12,8 @@ services:
     image: romankrajewski/visense:latest
     ports:
       - "8080:8080"
+    volumes:
+      - ./sample-data:/sample-data
     depends_on:
       - database
     env_file:

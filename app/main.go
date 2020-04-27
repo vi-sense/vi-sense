@@ -1,6 +1,8 @@
 package main
 
 import (
+	"fmt"
+	"io/ioutil"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -40,6 +42,14 @@ func setupRouter() *gin.Engine {
 func main() {
 	setupDatabase(true)
 	createMockData()
+
+	//check if bind mount is working
+	dat, err := ioutil.ReadFile("/sample-data/info.txt")
+	if err != nil {
+		panic(err)
+	}
+
+	fmt.Print(string(dat))
 
 	r := setupRouter()
 	// Listen and Server in 0.0.0.0:8080
