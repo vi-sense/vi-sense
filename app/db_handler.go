@@ -15,8 +15,8 @@ type RoomModel struct {
 	Sensors     []Sensor
 	Name        string
 	Description string
-	Path        string
-	ImagePath   string
+	Url         string
+	ImageUrl    string
 }
 
 type Sensor struct {
@@ -53,7 +53,7 @@ func setupDatabase(drop bool) {
 
 	if err != nil {
 		fmt.Println(err)
-		fmt.Print(dbinfo)
+		fmt.Println(dbinfo)
 		panic("[!] failed to connect to db")
 	} else {
 		fmt.Println("[✓] successfully connected to db")
@@ -112,22 +112,30 @@ func asJson(obj interface{}) string {
 
 func createMockData() {
 	m1 := &RoomModel{
-		Name:        "Basic 1",
-		Description: "A basic model",
-		Path:        "path_to_model",
-		ImagePath:   "path_to_image",
+		Name:        "Facility Mechanical Room",
+		Description: "Lorem ipsum",
+		Url:         "static",
+		ImageUrl:    "path_to_image",
 	}
 
 	m2 := &RoomModel{
-		Name:        "Basic 2",
-		Description: "A basic model",
-		Path:        "path_to_model",
-		ImagePath:   "path_to_image",
+		Name:        "MEP Building Model",
+		Description: "Lorem ipsum",
+		Url:         "path_to_model",
+		ImageUrl:    "path_to_image",
+	}
+
+	m3 := &RoomModel{
+		Name:        "Overhead MEP Installation",
+		Description: "Lorem ipsum",
+		Url:         "path_to_model",
+		ImageUrl:    "path_to_image",
 	}
 
 	// Create
 	db.Create(&m1)
 	db.Create(&m2)
+	db.Create(&m3)
 
 	fmt.Println("[✓] mock room model created")
 

@@ -6,7 +6,7 @@ services:
     env_file:
       - database.env # configure postgres
     volumes:
-      - database-volume:/var/lib/postgresql/data/ # persist data even if container shuts down (data is saved to ./database)
+      - database-volume:/var/lib/postgresql/data/ # persist data even if container shuts down
 
   web:
     image: romankrajewski/visense:latest
