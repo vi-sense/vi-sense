@@ -19,7 +19,12 @@ func setupRouter() *gin.Engine {
 
 	// Ping test
 	r.GET("/ping", func(c *gin.Context) {
-		c.String(http.StatusOK, "pong v0.1")
+		c.String(http.StatusOK, "pong")
+	})
+
+	// version check
+	r.GET("/version", func(c *gin.Context) {
+		c.String(http.StatusOK, "0.1")
 	})
 
 	r.GET("/models", func(c *gin.Context) {
