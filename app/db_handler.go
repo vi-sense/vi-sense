@@ -13,6 +13,7 @@ import (
 
 	"github.com/jinzhu/gorm"
 	_ "github.com/jinzhu/gorm/dialects/postgres"
+	_ "github.com/jinzhu/gorm/dialects/sqlite"
 )
 
 type RoomModel struct {
@@ -74,9 +75,31 @@ func setupDatabase(drop bool) {
 		fmt.Println("[✓] all data successfully dropped")
 	}
 
+	autoMigrate()
+	fmt.Println("[✓] schemes migrated")
+}
+
+func autoMigrate() {
 	// Migrate the Schema
 	db.AutoMigrate(&RoomModel{}, &Sensor{}, &Data{})
-	fmt.Println("[✓] schemes migrated")
+}
+func setupTestDatabase() *gorm.DB {
+	testDb, err := gorm.Open("sqlite3", "./gorm_test.db")
+	if err != nil {
+		fmt.Println("db err: ", err)
+	}
+	testDb.DB().SetMaxIdleConns(3)
+	db = testDb
+	autoMigrate()
+	return testDb
+}
+
+func deleteTestDatabase(testDB *gorm.DB) {
+	err := testDB.Close()
+	err = os.Remove("./gorm_test.db")
+	if err != nil {
+		fmt.Println("unable to delete test db", err)
+	}
 }
 
 // query all room models
@@ -120,7 +143,7 @@ func asJson(obj interface{}) string {
 	return string(b)
 }
 
-func createMockData() {
+func createMockData(sampleDataPath string) {
 	var models []*RoomModel
 
 	m1 := &RoomModel{
@@ -161,7 +184,7 @@ func createMockData() {
 			Description:     "A basic flow sensor.",
 			MeshID:          meshIds[i][0],
 			MeasurementUnit: "°C",
-			Data:            loadSampleData("/sample-data/sensors/sensor_004_vorlauf_deg-celcius.csv"),
+			Data:            loadSampleData(fmt.Sprintf("%s/sensors/sensor_004_vorlauf_deg-celcius.csv", sampleDataPath)),
 		}
 		db.Create(&s1)
 
@@ -171,7 +194,7 @@ func createMockData() {
 			Description:     "A basic return flow sensor with a longer description. Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua.",
 			MeshID:          meshIds[i][1],
 			MeasurementUnit: "°C",
-			Data:            loadSampleData("/sample-data/sensors/sensor_003_ruecklauf_deg-celcius.csv"),
+			Data:            loadSampleData(fmt.Sprintf("%s/sensors/sensor_003_ruecklauf_deg-celcius.csv", sampleDataPath)),
 		}
 		db.Create(&s2)
 
@@ -181,7 +204,7 @@ func createMockData() {
 			Description:     "A basic thermal sensor",
 			MeshID:          meshIds[i][2],
 			MeasurementUnit: "l",
-			Data:            loadSampleData("/sample-data/sensors/sensor_002_fuel_litres.csv"),
+			Data:            loadSampleData(fmt.Sprintf("%s/sensors/sensor_002_fuel_litres.csv", sampleDataPath)),
 		}
 		db.Create(&s3)
 
@@ -191,7 +214,7 @@ func createMockData() {
 			Description:     "A basic thermal sensor",
 			MeshID:          meshIds[i][3],
 			MeasurementUnit: "bar",
-			Data:            loadSampleData("/sample-data/sensors/sensor_001_pressure_bar.csv"),
+			Data:            loadSampleData(fmt.Sprintf("%s/sensors/sensor_001_pressure_bar.csv", sampleDataPath)),
 		}
 		db.Create(&s4)
 	}
