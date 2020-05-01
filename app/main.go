@@ -5,7 +5,6 @@ import (
 	"io/ioutil"
 	"net/http"
 
-	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 )
 
@@ -13,7 +12,7 @@ func setupRouter() *gin.Engine {
 	// Disable Console Color
 	// gin.DisableConsoleColor()
 	r := gin.Default()
-	r.Use(cors.Default()) // when no longer in production change this line
+	r.Use(CORS())
 
 	r.Static("/files", "/sample-data/models/")
 
@@ -24,7 +23,7 @@ func setupRouter() *gin.Engine {
 
 	// version check
 	r.GET("/version", func(c *gin.Context) {
-		c.String(http.StatusOK, "0.1")
+		c.String(http.StatusOK, "0.1.1")
 	})
 
 	r.GET("/models", func(c *gin.Context) {
@@ -46,6 +45,23 @@ func setupRouter() *gin.Engine {
 	})
 
 	return r
+}
+
+// https://github.com/gin-contrib/cors/issues/29#issuecomment-397859488
+func CORS() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		c.Writer.Header().Set("Access-Control-Allow-Origin", "*")
+		c.Writer.Header().Set("Access-Control-Allow-Credentials", "true")
+		c.Writer.Header().Set("Access-Control-Allow-Headers", "Accept, Origin, Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, X-Requested-With")
+		c.Writer.Header().Set("Access-Control-Allow-Methods", "POST, OPTIONS, GET, PUT, DELETE")
+
+		if c.Request.Method == "OPTIONS" {
+			c.AbortWithStatus(204)
+			return
+		}
+
+		c.Next()
+	}
 }
 
 func main() {
