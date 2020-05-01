@@ -27,21 +27,21 @@ func setupRouter() *gin.Engine {
 	})
 
 	r.GET("/models", func(c *gin.Context) {
-		c.String(http.StatusOK, queryRoomModels())
+		c.String(http.StatusOK, QueryRoomModels())
 	})
 
 	r.GET("/models/:id", func(c *gin.Context) {
 		id := c.Param("id")
-		c.String(http.StatusOK, queryRoomModel(id))
+		c.String(http.StatusOK, QueryRoomModel(id))
 	})
 
 	r.GET("/sensors", func(c *gin.Context) {
-		c.String(http.StatusOK, querySensors())
+		c.String(http.StatusOK, QuerySensors())
 	})
 
 	r.GET("/sensors/:id", func(c *gin.Context) {
 		id := c.Param("id")
-		c.String(http.StatusOK, querySensor(id))
+		c.String(http.StatusOK, QuerySensor(id))
 	})
 
 	return r
@@ -65,8 +65,8 @@ func CORS() gin.HandlerFunc {
 }
 
 func main() {
-	setupDatabase(true)
-	createMockData("/sample-data")
+	SetupDatabase(true)
+	CreateMockData("/sample-data")
 
 	//check if bind mount is working
 	dat, err := ioutil.ReadFile("/sample-data/info.txt")

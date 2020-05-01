@@ -1,12 +1,13 @@
 package main
 
 import (
-	"github.com/jinzhu/gorm"
-	"github.com/stretchr/testify/assert"
 	"net/http"
 	"net/http/httptest"
 	"os"
 	"testing"
+
+	"github.com/jinzhu/gorm"
+	"github.com/stretchr/testify/assert"
 )
 
 var testDB *gorm.DB
@@ -35,9 +36,9 @@ func TestModelsRoute(t *testing.T) {
 //This is a hack way to add test database for each case, as whole test will just share one database.
 //You can read TestWithoutAuth's comment to know how to not share database each case.
 func TestMain(m *testing.M) {
-	testDB = setupTestDatabase()
-	createMockData(".././sample-data")
+	SetupTestDatabase()
+	CreateMockData("../sample-data")
 	exitVal := m.Run()
-	deleteTestDatabase(testDB)
+	DeleteTestDatabase()
 	os.Exit(exitVal)
 }

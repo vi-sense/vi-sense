@@ -48,7 +48,7 @@ const Layout = "2006-01-02 15:04:05"
 
 var db *gorm.DB
 
-func setupDatabase(drop bool) {
+func SetupDatabase(drop bool) {
 	// load env file
 	//err := godotenv.Load("../database.env")
 	//if err != nil {
@@ -75,75 +75,31 @@ func setupDatabase(drop bool) {
 		fmt.Println("[✓] all data successfully dropped")
 	}
 
-	autoMigrate()
+	// Migrate the Schema
+	db.AutoMigrate(&RoomModel{}, &Sensor{}, &Data{})
 	fmt.Println("[✓] schemes migrated")
 }
 
-func autoMigrate() {
-	// Migrate the Schema
-	db.AutoMigrate(&RoomModel{}, &Sensor{}, &Data{})
-}
-func setupTestDatabase() *gorm.DB {
-	testDb, err := gorm.Open("sqlite3", "./gorm_test.db")
+func SetupTestDatabase() {
+	var err error
+	db, err = gorm.Open("sqlite3", "./gorm_test.db")
 	if err != nil {
 		fmt.Println("db err: ", err)
 	}
-	testDb.DB().SetMaxIdleConns(3)
-	db = testDb
-	autoMigrate()
-	return testDb
+	db.DB().SetMaxIdleConns(3)
+	// Migrate the Schema
+	db.AutoMigrate(&RoomModel{}, &Sensor{}, &Data{})
 }
 
-func deleteTestDatabase(testDB *gorm.DB) {
-	err := testDB.Close()
+func DeleteTestDatabase() {
+	err := db.Close()
 	err = os.Remove("./gorm_test.db")
 	if err != nil {
 		fmt.Println("unable to delete test db", err)
 	}
 }
 
-// query all room models
-func queryRoomModels() string {
-	var q []RoomModel
-	db.Find(&q)
-	return asJson(&q)
-}
-
-// query room model by id
-// - returns model with sensors
-func queryRoomModel(id string) string {
-	var q RoomModel
-	db.Preload("Sensors").First(&q, id)
-	return asJson(&q)
-}
-
-// TODO check if needed
-// query all sensors
-func querySensors() string {
-	var q []Sensor
-	db.Find(&q)
-	return asJson(&q)
-}
-
-// query sensor by id
-// - returns sensor with sensor data
-func querySensor(id string) string {
-	var q Sensor
-	db.Preload("Data").First(&q, id)
-	return asJson(&q)
-}
-
-func asJson(obj interface{}) string {
-	b, err := json.Marshal(&obj)
-	if err != nil {
-		fmt.Println("[!]", err)
-		return ""
-	}
-
-	return string(b)
-}
-
-func createMockData(sampleDataPath string) {
+func CreateMockData(sampleDataPath string) {
 	var models []*RoomModel
 
 	m1 := &RoomModel{
@@ -220,6 +176,47 @@ func createMockData(sampleDataPath string) {
 	}
 
 	fmt.Println("[✓] finished loading sensor data")
+}
+
+// query all room models
+func QueryRoomModels() string {
+	var q []RoomModel
+	db.Find(&q)
+	return asJson(&q)
+}
+
+// query room model by id
+// - returns model with sensors
+func QueryRoomModel(id string) string {
+	var q RoomModel
+	db.Preload("Sensors").First(&q, id)
+	return asJson(&q)
+}
+
+// TODO check if needed
+// query all sensors
+func QuerySensors() string {
+	var q []Sensor
+	db.Find(&q)
+	return asJson(&q)
+}
+
+// query sensor by id
+// - returns sensor with sensor data
+func QuerySensor(id string) string {
+	var q Sensor
+	db.Preload("Data").First(&q, id)
+	return asJson(&q)
+}
+
+func asJson(obj interface{}) string {
+	b, err := json.Marshal(&obj)
+	if err != nil {
+		fmt.Println("[!]", err)
+		return ""
+	}
+
+	return string(b)
 }
 
 func loadSampleData(path string) []Data {
