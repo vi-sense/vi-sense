@@ -66,7 +66,7 @@ func CORS() gin.HandlerFunc {
 
 func main() {
 	setupDatabase(true)
-	createMockData()
+	createMockData("/sample-data")
 
 	//check if bind mount is working
 	dat, err := ioutil.ReadFile("/sample-data/info.txt")
@@ -78,5 +78,8 @@ func main() {
 
 	r := setupRouter()
 	// Listen and Server in 0.0.0.0:8080
-	r.Run(":8080")
+	err = r.Run(":8080")
+	if err != nil {
+		panic(r)
+	}
 }
