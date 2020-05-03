@@ -8,7 +8,7 @@
         "title": "vi-sense BIM API",
         "contact": {},
         "license": {},
-        "version": "0.1.1"
+        "version": "0.1.2"
     },
     "host": "visense.f4.htw-berlin.de:8080",
     "basePath": "/",
