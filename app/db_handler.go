@@ -9,7 +9,6 @@ import (
 	"time"
 
 	"encoding/csv"
-	"encoding/json"
 
 	"github.com/jinzhu/gorm"
 	_ "github.com/jinzhu/gorm/dialects/postgres"
@@ -176,47 +175,6 @@ func CreateMockData(sampleDataPath string) {
 	}
 
 	fmt.Println("[✓] finished loading sensor data")
-}
-
-// query all room models
-func QueryRoomModels() string {
-	var q []RoomModel
-	db.Find(&q)
-	return asJson(&q)
-}
-
-// query room model by id
-// - returns model with sensors
-func QueryRoomModel(id string) string {
-	var q RoomModel
-	db.Preload("Sensors").First(&q, id)
-	return asJson(&q)
-}
-
-// TODO check if needed
-// query all sensors
-func QuerySensors() string {
-	var q []Sensor
-	db.Find(&q)
-	return asJson(&q)
-}
-
-// query sensor by id
-// - returns sensor with sensor data
-func QuerySensor(id string) string {
-	var q Sensor
-	db.Preload("Data").First(&q, id)
-	return asJson(&q)
-}
-
-func asJson(obj interface{}) string {
-	b, err := json.Marshal(&obj)
-	if err != nil {
-		fmt.Println("[!]", err)
-		return ""
-	}
-
-	return string(b)
 }
 
 func loadSampleData(path string) []Data {
