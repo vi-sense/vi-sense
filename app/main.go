@@ -25,11 +25,6 @@ func setupRouter() *gin.Engine {
 		c.String(http.StatusOK, "pong")
 	})
 
-	// version check
-	r.GET("/version", func(c *gin.Context) {
-		c.String(http.StatusOK, "0.1.1")
-	})
-
 	r.GET("/models", func(c *gin.Context) {
 		c.String(http.StatusOK, QueryRoomModels())
 	})
