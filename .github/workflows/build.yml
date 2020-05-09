@@ -2,11 +2,11 @@ on:
   push:
     branches:
       - master
-      - minimal_go_server
+      - dev
   pull_request:
     branches:
       - master
-      - minimal_go_server
+      - dev
 name: BuildPush
 jobs:
   build:
