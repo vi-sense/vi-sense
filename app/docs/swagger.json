@@ -15,7 +15,7 @@
     "paths": {
         "/models": {
             "get": {
-                "description": "Query all avaiable room models.",
+                "description": "Query all available room models.",
                 "produces": [
                     "application/json"
                 ],
@@ -29,18 +29,18 @@
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/main.RoomModel"
+                                "$ref": "#/definitions/model.RoomModel"
                             }
                         }
                     },
                     "400": {
-                        "description": "ok",
+                        "description": "bad request",
                         "schema": {
                             "type": "string"
                         }
                     },
                     "500": {
-                        "description": "ok",
+                        "description": "internal server error",
                         "schema": {
                             "type": "string"
                         }
@@ -71,23 +71,23 @@
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/main.RoomModel"
+                            "$ref": "#/definitions/model.RoomModel"
                         }
                     },
                     "400": {
-                        "description": "ok",
+                        "description": "bad request",
                         "schema": {
                             "type": "string"
                         }
                     },
                     "404": {
-                        "description": "ok",
+                        "description": "not found",
                         "schema": {
                             "type": "string"
                         }
                     },
                     "500": {
-                        "description": "ok",
+                        "description": "internal server error",
                         "schema": {
                             "type": "string"
                         }
@@ -97,7 +97,7 @@
         },
         "/sensors": {
             "get": {
-                "description": "Query all avaiable sensors.",
+                "description": "Query all available sensors.",
                 "produces": [
                     "application/json"
                 ],
@@ -111,18 +111,18 @@
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/main.Sensor"
+                                "$ref": "#/definitions/model.Sensor"
                             }
                         }
                     },
                     "400": {
-                        "description": "ok",
+                        "description": "bad request",
                         "schema": {
                             "type": "string"
                         }
                     },
                     "500": {
-                        "description": "ok",
+                        "description": "internal server error",
                         "schema": {
                             "type": "string"
                         }
@@ -153,23 +153,23 @@
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/main.Sensor"
+                            "$ref": "#/definitions/model.Sensor"
                         }
                     },
                     "400": {
-                        "description": "ok",
+                        "description": "bad request",
                         "schema": {
                             "type": "string"
                         }
                     },
                     "404": {
-                        "description": "ok",
+                        "description": "not found",
                         "schema": {
                             "type": "string"
                         }
                     },
                     "500": {
-                        "description": "ok",
+                        "description": "internal server error",
                         "schema": {
                             "type": "string"
                         }
@@ -179,7 +179,7 @@
         }
     },
     "definitions": {
-        "main.Data": {
+        "model.Data": {
             "type": "object",
             "properties": {
                 "date": {
@@ -196,7 +196,7 @@
                 }
             }
         },
-        "main.RoomModel": {
+        "model.RoomModel": {
             "type": "object",
             "properties": {
                 "description": {
@@ -214,7 +214,7 @@
                 "sensors": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/main.Sensor"
+                        "$ref": "#/definitions/model.Sensor"
                     }
                 },
                 "url": {
@@ -222,13 +222,13 @@
                 }
             }
         },
-        "main.Sensor": {
+        "model.Sensor": {
             "type": "object",
             "properties": {
                 "data": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/main.Data"
+                        "$ref": "#/definitions/model.Data"
                     }
                 },
                 "description": {

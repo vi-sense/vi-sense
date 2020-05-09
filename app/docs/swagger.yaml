@@ -1,6 +1,6 @@
 basePath: /
 definitions:
-  main.Data:
+  model.Data:
     properties:
       date:
         type: string
@@ -11,7 +11,7 @@ definitions:
       value:
         type: number
     type: object
-  main.RoomModel:
+  model.RoomModel:
     properties:
       description:
         type: string
@@ -23,16 +23,16 @@ definitions:
         type: string
       sensors:
         items:
-          $ref: '#/definitions/main.Sensor'
+          $ref: '#/definitions/model.Sensor'
         type: array
       url:
         type: string
     type: object
-  main.Sensor:
+  model.Sensor:
     properties:
       data:
         items:
-          $ref: '#/definitions/main.Data'
+          $ref: '#/definitions/model.Data'
         type: array
       description:
         type: string
@@ -58,7 +58,7 @@ info:
 paths:
   /models:
     get:
-      description: Query all avaiable room models.
+      description: Query all available room models.
       produces:
       - application/json
       responses:
@@ -66,14 +66,14 @@ paths:
           description: OK
           schema:
             items:
-              $ref: '#/definitions/main.RoomModel'
+              $ref: '#/definitions/model.RoomModel'
             type: array
         "400":
-          description: ok
+          description: bad request
           schema:
             type: string
         "500":
-          description: ok
+          description: internal server error
           schema:
             type: string
       summary: Query models
@@ -94,17 +94,17 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/main.RoomModel'
+            $ref: '#/definitions/model.RoomModel'
         "400":
-          description: ok
+          description: bad request
           schema:
             type: string
         "404":
-          description: ok
+          description: not found
           schema:
             type: string
         "500":
-          description: ok
+          description: internal server error
           schema:
             type: string
       summary: Query room model
@@ -112,7 +112,7 @@ paths:
       - models
   /sensors:
     get:
-      description: Query all avaiable sensors.
+      description: Query all available sensors.
       produces:
       - application/json
       responses:
@@ -120,14 +120,14 @@ paths:
           description: OK
           schema:
             items:
-              $ref: '#/definitions/main.Sensor'
+              $ref: '#/definitions/model.Sensor'
             type: array
         "400":
-          description: ok
+          description: bad request
           schema:
             type: string
         "500":
-          description: ok
+          description: internal server error
           schema:
             type: string
       summary: Query sensors
@@ -148,17 +148,17 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/main.Sensor'
+            $ref: '#/definitions/model.Sensor'
         "400":
-          description: ok
+          description: bad request
           schema:
             type: string
         "404":
-          description: ok
+          description: not found
           schema:
             type: string
         "500":
-          description: ok
+          description: internal server error
           schema:
             type: string
       summary: Query sensor

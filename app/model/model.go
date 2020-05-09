@@ -1,4 +1,4 @@
-package main
+package model
 
 import (
 	"bufio"
@@ -13,6 +13,7 @@ import (
 	"github.com/jinzhu/gorm"
 	_ "github.com/jinzhu/gorm/dialects/postgres"
 	_ "github.com/jinzhu/gorm/dialects/sqlite"
+
 )
 
 type RoomModel struct {
@@ -45,60 +46,34 @@ type Data struct {
 // https://pauladamsmith.com/blog/2011/05/go_time.html
 const Layout = "2006-01-02 15:04:05"
 
-var db *gorm.DB
+var DB *gorm.DB
 
 func SetupDatabase(drop bool) {
-	// load env file
-	//err := godotenv.Load("../database.env")
-	//if err != nil {
-	//	fmt.Println(err)
-	//	panic("[!] Please create a 'database.env' file and prepare the needed variables.")
-	//}
-
-	// TODO check if sslmode can be enabled later
-	dbinfo := fmt.Sprintf("host=%s port=%s user=%s dbname=%s password=%s sslmode=disable",
+	// TODO check if ssl mode can be enabled later
+	dbInfo := fmt.Sprintf("host=%s port=%s user=%s dbname=%s password=%s sslmode=disable",
 		os.Getenv("POSTGRES_HOST"), os.Getenv("POSTGRES_PORT"), os.Getenv("POSTGRES_USER"), os.Getenv("POSTGRES_DB"), os.Getenv("POSTGRES_PASSWORD"))
 	var err error
-	db, err = gorm.Open("postgres", dbinfo)
+	DB, err = gorm.Open("postgres", dbInfo)
 
 	if err != nil {
 		fmt.Println(err)
-		fmt.Println(dbinfo)
+		fmt.Println(dbInfo)
 		panic("[!] failed to connect to db")
 	} else {
 		fmt.Println("[✓] successfully connected to db")
 	}
 
 	if drop {
-		db.DropTableIfExists(&RoomModel{}, &Sensor{}, &Data{})
+		DB.DropTableIfExists(&RoomModel{}, &Sensor{}, &Data{})
 		fmt.Println("[✓] all data successfully dropped")
 	}
 
 	// Migrate the Schema
-	db.AutoMigrate(&RoomModel{}, &Sensor{}, &Data{})
+	DB.AutoMigrate(&RoomModel{}, &Sensor{}, &Data{})
 	fmt.Println("[✓] schemes migrated")
 }
 
-func SetupTestDatabase() {
-	var err error
-	db, err = gorm.Open("sqlite3", "./gorm_test.db")
-	if err != nil {
-		fmt.Println("db err: ", err)
-	}
-	db.DB().SetMaxIdleConns(3)
-	// Migrate the Schema
-	db.AutoMigrate(&RoomModel{}, &Sensor{}, &Data{})
-}
-
-func DeleteTestDatabase() {
-	err := db.Close()
-	err = os.Remove("./gorm_test.db")
-	if err != nil {
-		fmt.Println("unable to delete test db", err)
-	}
-}
-
-func CreateMockData(sampleDataPath string) {
+func CreateMockData(sampleDataPath string, dataLimit int) {
 	var models []*RoomModel
 
 	m1 := &RoomModel{
@@ -132,16 +107,16 @@ func CreateMockData(sampleDataPath string) {
 	fmt.Println("[i] loading sensor data")
 
 	for i, m := range models {
-		db.Create(&m)
+		DB.Create(&m)
 		s1 := &Sensor{
 			RoomModelID:     m.ID,
 			Name:            "Flow Sensor",
 			Description:     "A basic flow sensor.",
 			MeshID:          meshIds[i][0],
 			MeasurementUnit: "°C",
-			Data:            loadSampleData(fmt.Sprintf("%s/sensors/sensor_004_vorlauf_deg-celcius.csv", sampleDataPath)),
+			Data:            loadSampleData(fmt.Sprintf("%s/sensors/sensor_004_vorlauf_deg-celcius.csv", sampleDataPath), dataLimit),
 		}
-		db.Create(&s1)
+		DB.Create(&s1)
 
 		s2 := &Sensor{
 			RoomModelID:     m.ID,
@@ -149,9 +124,9 @@ func CreateMockData(sampleDataPath string) {
 			Description:     "A basic return flow sensor with a longer description. Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua.",
 			MeshID:          meshIds[i][1],
 			MeasurementUnit: "°C",
-			Data:            loadSampleData(fmt.Sprintf("%s/sensors/sensor_003_ruecklauf_deg-celcius.csv", sampleDataPath)),
+			Data:            loadSampleData(fmt.Sprintf("%s/sensors/sensor_003_ruecklauf_deg-celcius.csv", sampleDataPath), dataLimit),
 		}
-		db.Create(&s2)
+		DB.Create(&s2)
 
 		s3 := &Sensor{
 			RoomModelID:     m.ID,
@@ -159,9 +134,9 @@ func CreateMockData(sampleDataPath string) {
 			Description:     "A basic thermal sensor",
 			MeshID:          meshIds[i][2],
 			MeasurementUnit: "l",
-			Data:            loadSampleData(fmt.Sprintf("%s/sensors/sensor_002_fuel_litres.csv", sampleDataPath)),
+			Data:            loadSampleData(fmt.Sprintf("%s/sensors/sensor_002_fuel_litres.csv", sampleDataPath), dataLimit),
 		}
-		db.Create(&s3)
+		DB.Create(&s3)
 
 		s4 := &Sensor{
 			RoomModelID:     m.ID,
@@ -169,15 +144,34 @@ func CreateMockData(sampleDataPath string) {
 			Description:     "A basic thermal sensor",
 			MeshID:          meshIds[i][3],
 			MeasurementUnit: "bar",
-			Data:            loadSampleData(fmt.Sprintf("%s/sensors/sensor_001_pressure_bar.csv", sampleDataPath)),
+			Data:            loadSampleData(fmt.Sprintf("%s/sensors/sensor_001_pressure_bar.csv", sampleDataPath), dataLimit),
 		}
-		db.Create(&s4)
+		DB.Create(&s4)
 	}
 
 	fmt.Println("[✓] finished loading sensor data")
 }
 
-func loadSampleData(path string) []Data {
+func SetupTestDatabase() {
+	var err error
+	DB, err = gorm.Open("sqlite3", "./gorm_test.db")
+	if err != nil {
+		fmt.Println("db err: ", err)
+	}
+	DB.DB().SetMaxIdleConns(3)
+	// Migrate the Schema
+	DB.AutoMigrate(&RoomModel{}, &Sensor{}, &Data{})
+}
+
+func DeleteTestDatabase() {
+	err := DB.Close()
+	err = os.Remove("./gorm_test.db")
+	if err != nil {
+		fmt.Println("unable to delete test db", err)
+	}
+}
+
+func loadSampleData(path string, dataLimit int) []Data {
 	csvFile, err := os.Open(path)
 	if err != nil {
 		fmt.Println("[!] Error ", err)
@@ -185,11 +179,10 @@ func loadSampleData(path string) []Data {
 	reader := csv.NewReader(bufio.NewReader(csvFile))
 	var data []Data
 
-	maxCount := 1000
 	i := 0
 
 	for {
-		if i == maxCount {
+		if i == dataLimit {
 			break
 		}
 
