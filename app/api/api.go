@@ -25,7 +25,8 @@ func SetupRouter() *gin.Engine {
 	r.Use(cors.Default())
 
 	//uses a middleware to serve static files to the root url.
-	//this is needed by vue and can't be done with gin only, because gin complains if there is a wildcard route with conflicting child routes.
+	//this is needed by vue and can't be done with gin only, because gin complains if there is
+	//a wildcard route with conflicting child routes.
 	r.Use(static.Serve("/", static.LocalFile("/static/", false)))
 
 	//needed for vue-router, routes every route that wasn't found to index.html
@@ -40,30 +41,37 @@ func SetupRouter() *gin.Engine {
 		c.String(http.StatusOK, "pong")
 	})
 
-	r.GET("/models", func(c *gin.Context) {
-		c.String(QueryRoomModels())
-	})
+	models := r.Group("/models")
+	{
+		models.GET("", func(c *gin.Context) {
+			c.String(QueryRoomModels())
+		})
+		models.GET(":id", func(c *gin.Context) {
+			c.String(QueryRoomModel(c))
+		})
+	}
 
-	r.GET("/models/:id", func(c *gin.Context) {
-		id := c.Param("id")
-		c.String(QueryRoomModel(id))
-	})
+	sensors := r.Group("/sensors")
+	{
+		sensors.GET("", func(c *gin.Context) {
+			c.String(QuerySensors())
+		})
 
-	r.GET("/sensors", func(c *gin.Context) {
-		c.String(QuerySensors())
-	})
+		sensors.GET(":id", func(c *gin.Context) {
+			c.String(QuerySensor(c))
+		})
 
-	r.GET("/sensors/:id", func(c *gin.Context) {
-		id := c.Param("id")
-		c.String(QuerySensor(id))
-	})
+		sensors.PATCH(":id", func(c *gin.Context) {
+			c.String(PatchSensor(c))
+		})
+	}
 
 	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 
 	return r
 }
 
-func asJSON(obj interface{}) string {
+func AsJSON(obj interface{}) string {
 	b, err := json.Marshal(&obj)
 	if err != nil {
 		fmt.Println("[!]", err)

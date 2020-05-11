@@ -1,6 +1,8 @@
 package api
 
 import (
+	"fmt"
+	"github.com/gin-gonic/gin"
 	. "github.com/vi-sense/vi-sense/app/model"
 	"net/http"
 )
@@ -17,7 +19,7 @@ import (
 func QueryRoomModels() (int, string) {
 	var q []RoomModel
 	DB.Find(&q)
-	return http.StatusOK, asJSON(&q)
+	return http.StatusOK, AsJSON(&q)
 }
 
 //QueryRoomModel godoc
@@ -31,11 +33,12 @@ func QueryRoomModels() (int, string) {
 //@Failure 404 {string} string "not found"
 //@Failure 500 {string} string "internal server error"
 //@Router /models/{id} [get]
-func QueryRoomModel(id string) (int, string) {
+func QueryRoomModel(c *gin.Context) (int, string) {
 	var q RoomModel
+	id := c.Param("id")
 	DB.Preload("Sensors").First(&q, id)
 	if q.ID == 0 {
-		return http.StatusNotFound, ""
+		return http.StatusNotFound, AsJSON(gin.H{"error": fmt.Sprintf("Model %s not found.", id)})
 	}
-	return http.StatusOK, asJSON(&q)
+	return http.StatusOK, AsJSON(&q)
 }
