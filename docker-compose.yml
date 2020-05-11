@@ -7,7 +7,8 @@ services:
       - database.env # configure postgres
     volumes:
       - database-volume:/var/lib/postgresql/data/ # persist data even if container shuts down
-
+    ports:
+      - 5432:5432
   web:
     image: romankrajewski/visense:latest
     ports:
