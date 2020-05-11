@@ -6,11 +6,11 @@ import (
 	"net/http"
 
 	"github.com/gin-contrib/cors"
+	"github.com/gin-contrib/static"
 	"github.com/gin-gonic/gin"
 	swaggerFiles "github.com/swaggo/files"
 	ginSwagger "github.com/swaggo/gin-swagger"
 	_ "github.com/vi-sense/vi-sense/app/docs"
-	"github.com/gin-contrib/static"
 )
 
 func setupRouter() *gin.Engine {
