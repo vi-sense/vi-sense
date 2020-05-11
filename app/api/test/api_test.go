@@ -11,8 +11,8 @@ import (
 	. "github.com/vi-sense/vi-sense/app/model"
 )
 
-//This is a hack way to add test database for each case, as whole test will just share one database.
-//You can read TestWithoutAuth's comment to know how to not share database each case.
+// This is a hack way to add test database for each case, as whole test will just share one database.
+// You can read TestWithoutAuth's comment to know how to not share database each case.
 func TestMain(m *testing.M) {
 	SetupTestDatabase()
 	CreateMockData("../../../sample-data", 3)

@@ -16,6 +16,7 @@ import (
 
 )
 
+//RoomModel specifies the structure for a single BIM model
 type RoomModel struct {
 	ID          uint
 	Sensors     []Sensor
@@ -25,6 +26,7 @@ type RoomModel struct {
 	ImageUrl    string
 }
 
+//Sensor specifies the structure for a single sensor which is located inside a RoomModel
 type Sensor struct {
 	ID              uint
 	RoomModelID     uint
@@ -35,6 +37,7 @@ type Sensor struct {
 	MeasurementUnit string
 }
 
+//Data specifies the structure for a single measured value w/ timestamp which was recorded by a sensor
 type Data struct {
 	ID       uint
 	SensorID uint
@@ -48,6 +51,8 @@ const Layout = "2006-01-02 15:04:05"
 
 var DB *gorm.DB
 
+//SetupDatabase initializes the database w/ the orm mapping and postgres as the dialect;
+//drop defines whether or not the currently active scheme should be dropped
 func SetupDatabase(drop bool) {
 	// TODO check if ssl mode can be enabled later
 	dbInfo := fmt.Sprintf("host=%s port=%s user=%s dbname=%s password=%s sslmode=disable",
@@ -152,6 +157,7 @@ func CreateMockData(sampleDataPath string, dataLimit int) {
 	fmt.Println("[✓] finished loading sensor data")
 }
 
+//SetupTestDatabase creates local sqlite db for testing
 func SetupTestDatabase() {
 	var err error
 	DB, err = gorm.Open("sqlite3", "./gorm_test.db")
@@ -163,6 +169,7 @@ func SetupTestDatabase() {
 	DB.AutoMigrate(&RoomModel{}, &Sensor{}, &Data{})
 }
 
+//DeleteTestDatabase deletes local sqlite db for testing
 func DeleteTestDatabase() {
 	err := DB.Close()
 	err = os.Remove("./gorm_test.db")
@@ -194,7 +201,14 @@ func loadSampleData(path string, dataLimit int) []Data {
 			panic("[!] Error loading sample data")
 		}
 
-		t, _ := time.Parse(Layout, line[0]+" "+line[1])
+		if len(line) < 3 {
+			fmt.Println("[!] Line skipped because there is not enough data prepared.", err)
+			fmt.Printf("[!] Line: %s", line)
+			continue
+		}
+
+		s := fmt.Sprintf("%s %s", line[0], line[1])
+		t, _ := time.Parse(Layout, s)
 		v, _ := strconv.ParseFloat(line[2], 64)
 
 		data = append(data, Data{

@@ -10,17 +10,16 @@ import (
 	"net/http"
 )
 
-// @title vi-sense BIM API
-// @version 0.1.2
-// @description This API provides information about 3D room models with associated sensors and their data.
+//@title vi-sense BIM API
+//@version 0.1.2
+//@description This API provides information about 3D room models with associated sensors and their data.
 
-// @host visense.f4.htw-berlin.de:8080
-// @BasePath /
-// @schemes http
+//@host visense.f4.htw-berlin.de:8080
+//@BasePath /
+//@schemes http
 
+//SetupRouter initializes all available routes / endpoints and the access to static files
 func SetupRouter() *gin.Engine {
-	// Disable Console Color
-	// gin.DisableConsoleColor()
 	r := gin.Default()
 	r.Use(cors.Default())
 
