@@ -12,7 +12,7 @@ import (
 )
 
 //@title vi-sense BIM API
-//@version 0.1.2
+//@version 0.1.3
 //@description This API provides information about 3D room models with associated sensors and their data.
 
 //@host visense.f4.htw-berlin.de:8080

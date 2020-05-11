@@ -58,7 +58,7 @@ func TestQuerySensorIDMalformed(t *testing.T) {
 func TestPatchSensor(t *testing.T) {
 	r := SetupRouter()
 	w := httptest.NewRecorder()
-	i := AsJSON(&UpdateSensorInput{MeshID: "node357"})
+	i := AsJSON(&UpdateSensor{MeshID: "node357"})
 	req, _ := http.NewRequest(http.MethodPatch, "/sensors/1", strings.NewReader(i))
 	r.ServeHTTP(w, req)
 	assert.Equal(t, 200, w.Code)
@@ -69,7 +69,7 @@ func TestPatchSensor(t *testing.T) {
 	assert.Equal(t, expected, string(body))
 
 	// change data back
-	i = AsJSON(&UpdateSensorInput{MeshID: "node358"})
+	i = AsJSON(&UpdateSensor{MeshID: "node358"})
 	req, _ = http.NewRequest(http.MethodPatch, "/sensors/1", strings.NewReader(i))
 	r.ServeHTTP(w, req)
 	assert.Equal(t, 200, w.Code)
@@ -78,7 +78,7 @@ func TestPatchSensor(t *testing.T) {
 func TestPatchSensorIDNotFound(t *testing.T) {
 	r := SetupRouter()
 	w := httptest.NewRecorder()
-	i := AsJSON(&UpdateSensorInput{MeshID: "node357"})
+	i := AsJSON(&UpdateSensor{MeshID: "node357"})
 	req, _ := http.NewRequest(http.MethodPatch, "/sensors/13", strings.NewReader(i))
 	r.ServeHTTP(w, req)
 	assert.Equal(t, 404, w.Code)
@@ -87,7 +87,7 @@ func TestPatchSensorIDNotFound(t *testing.T) {
 func TestPatchSensorIDMalformed(t *testing.T) {
 	r := SetupRouter()
 	w := httptest.NewRecorder()
-	i := AsJSON(&UpdateSensorInput{MeshID: "node357"})
+	i := AsJSON(&UpdateSensor{MeshID: "node357"})
 	req, _ := http.NewRequest(http.MethodPatch, "/sensors/malformed", strings.NewReader(i))
 	r.ServeHTTP(w, req)
 	assert.Equal(t, 404, w.Code)

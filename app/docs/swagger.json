@@ -8,7 +8,7 @@
         "title": "vi-sense BIM API",
         "contact": {},
         "license": {},
-        "version": "0.1.2"
+        "version": "0.1.3"
     },
     "host": "visense.f4.htw-berlin.de:8080",
     "basePath": "/",
@@ -175,10 +175,69 @@
                         }
                     }
                 }
+            },
+            "patch": {
+                "description": "Updates the mesh id of a single sensor.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "sensors"
+                ],
+                "summary": "Update sensor location",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "SensorId",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Update sensor",
+                        "name": "sensor",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/api.UpdateSensor"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/model.Sensor"
+                        }
+                    },
+                    "400": {
+                        "description": "bad request",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "internal server error",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
             }
         }
     },
     "definitions": {
+        "api.UpdateSensor": {
+            "type": "object",
+            "properties": {
+                "meshID": {
+                    "type": "string"
+                }
+            }
+        },
         "model.Data": {
             "type": "object",
             "properties": {

@@ -1,5 +1,10 @@
 basePath: /
 definitions:
+  api.UpdateSensor:
+    properties:
+      meshID:
+        type: string
+    type: object
   model.Data:
     properties:
       date:
@@ -54,7 +59,7 @@ info:
     sensors and their data.
   license: {}
   title: vi-sense BIM API
-  version: 0.1.2
+  version: 0.1.3
 paths:
   /models:
     get:
@@ -162,6 +167,40 @@ paths:
           schema:
             type: string
       summary: Query sensor
+      tags:
+      - sensors
+    patch:
+      consumes:
+      - application/json
+      description: Updates the mesh id of a single sensor.
+      parameters:
+      - description: SensorId
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Update sensor
+        in: body
+        name: sensor
+        required: true
+        schema:
+          $ref: '#/definitions/api.UpdateSensor'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.Sensor'
+        "400":
+          description: bad request
+          schema:
+            type: string
+        "500":
+          description: internal server error
+          schema:
+            type: string
+      summary: Update sensor location
       tags:
       - sensors
 schemes:

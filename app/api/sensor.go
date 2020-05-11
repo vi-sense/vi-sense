@@ -7,7 +7,7 @@ import (
 	"net/http"
 )
 
-type UpdateSensorInput struct {
+type UpdateSensor struct {
 	MeshID string
 }
 
@@ -47,17 +47,18 @@ func QuerySensor(c *gin.Context) (int, string) {
 	return http.StatusOK, AsJSON(&q)
 }
 
-//QuerySensor godoc
+//Patch	Sensor godoc
 //@Summary Update sensor location
 //@Description Updates the mesh id of a single sensor.
 //@Tags sensors
 //@Accept json
 //@Produce json
 //@Param id path int true "SensorId"
+//@Param sensor body UpdateSensor true "Update sensor"
 //@Success 200 {object} model.Sensor
 //@Failure 400 {string} string "bad request"
 //@Failure 500 {string} string "internal server error"
-//@Router /sensors/{id} [get]
+//@Router /sensors/{id} [patch]
 func PatchSensor(c *gin.Context) (int, string) {
 	var q Sensor
 	id := c.Param("id")
@@ -67,7 +68,7 @@ func PatchSensor(c *gin.Context) (int, string) {
 		return http.StatusNotFound, AsJSON(gin.H{"error": fmt.Sprintf("Sensor %s not found.", id)})
 	}
 
-	var input UpdateSensorInput
+	var input UpdateSensor
 	if err := c.ShouldBindJSON(&input); err != nil {
 		return http.StatusBadRequest, AsJSON(gin.H{"error": err.Error()})
 	}
