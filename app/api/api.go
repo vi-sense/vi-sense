@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/gin-contrib/cors"
+	"github.com/gin-contrib/static"
 	"github.com/gin-gonic/gin"
 	swaggerFiles "github.com/swaggo/files"
 	ginSwagger "github.com/swaggo/gin-swagger"
@@ -22,6 +23,15 @@ import (
 func SetupRouter() *gin.Engine {
 	r := gin.Default()
 	r.Use(cors.Default())
+
+	//uses a middleware to serve static files to the root url.
+	//this is needed by vue and can't be done with gin only, because gin complains if there is a wildcard route with conflicting child routes.
+	r.Use(static.Serve("/", static.LocalFile("/static/", false)))
+
+	//needed for vue-router, routes every route that wasn't found to index.html
+	r.NoRoute(func(c *gin.Context) {
+		c.File("/static/index.html")
+	})
 
 	r.Static("/files", "/sample-data/models/")
 
