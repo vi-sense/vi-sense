@@ -10,6 +10,7 @@ import (
 	swaggerFiles "github.com/swaggo/files"
 	ginSwagger "github.com/swaggo/gin-swagger"
 	_ "github.com/vi-sense/vi-sense/app/docs"
+	"github.com/gin-contrib/static"
 )
 
 func setupRouter() *gin.Engine {
@@ -20,6 +21,15 @@ func setupRouter() *gin.Engine {
 
 	r.Static("/files", "/sample-data/models/")
 
+	//uses a middleware to serve static files to the root url.
+	//this is needed by vue and can't be done with gin only, because gin complains if there is a wildcard route with conflicting child routes.
+
+	r.Use(static.Serve("/", static.LocalFile("/static/", false)))
+
+	//needed for vue-router, routes every route that wasn't found to index.html
+	r.NoRoute(func(c *gin.Context) {
+		c.File("/static/index.html")
+	})
 	// Ping test
 	r.GET("/ping", func(c *gin.Context) {
 		c.String(http.StatusOK, "pong")
