@@ -3,3 +3,10 @@ services:
   web:
     build: ./app # use this line to build the app locally
     image: visense-dev
+    env_file:
+      - webserver_local.env
+      - database.env
+
+  frontend: #only used for copying the public files to the volume so the go server can serve them
+    build: ../vi-sense-frontend/
+    image: visense-frontend-dev

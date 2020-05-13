@@ -14,10 +14,19 @@ services:
       - "8080:8080"
     volumes:
       - ./sample-data:/sample-data
+      - frontend-data:/static
     depends_on:
       - database
+      - frontend
     env_file:
       - database.env #configure db access
+      - webserver_integration.env
+
+  frontend: #only used for copying the public files to the volume so the go server can serve them
+    image: romankrajewski/visense-frontend:latest
+    volumes:
+      - frontend-data:/static
 
 volumes:
   database-volume:
+  frontend-data:
