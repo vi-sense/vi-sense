@@ -8,7 +8,7 @@ services:
 
   frontend:
     ports:
-      - "8081:8081"
+      - "8081:${FRONTEND_PORT}"
     environment:
       - STATIC_DIR=/static
       - PORT=8081

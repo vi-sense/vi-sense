@@ -6,8 +6,8 @@ services:
 
   frontend:
     build:
-      context: ../vi-sense-frontend/
+      context: ${FRONTEND_DIR}
       target: develop
     image: visense-frontend-dev
     volumes:
-      - ../vi-sense-frontend/src:/app/src
+      - ${FRONTEND_DIR}/src:/app/src
