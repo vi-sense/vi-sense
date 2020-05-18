@@ -1,5 +1,18 @@
 basePath: /
 definitions:
+  api.Anomaly:
+    properties:
+      date:
+        type: string
+      difference:
+        type: number
+      gradient:
+        type: number
+      type:
+        type: string
+      value:
+        type: number
+    type: object
   api.UpdateSensor:
     properties:
       meshID:
@@ -201,6 +214,58 @@ paths:
           schema:
             type: string
       summary: Update sensor location
+      tags:
+      - sensors
+  /sensors/{id}/anomalies:
+    get:
+      description: Query anomalies for a specific sensor
+      parameters:
+      - description: Start Date
+        in: query
+        name: start
+        type: string
+      - description: End Date
+        in: query
+        name: end
+        type: string
+      - description: Maximum Difference
+        in: query
+        name: max-diff
+        type: number
+      - description: Maximum Gradient
+        in: query
+        name: max-grad
+        type: number
+      - description: Lower Value Limit
+        in: query
+        name: lower-limit
+        type: number
+      - description: Upper Value Limit
+        in: query
+        name: upper-limit
+        type: number
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/api.Anomaly'
+            type: array
+        "400":
+          description: bad request
+          schema:
+            type: string
+        "404":
+          description: not found
+          schema:
+            type: string
+        "500":
+          description: internal server error
+          schema:
+            type: string
+      summary: Query anomalies
       tags:
       - sensors
 schemes:

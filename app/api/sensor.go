@@ -4,7 +4,9 @@ import (
 	"fmt"
 	"github.com/gin-gonic/gin"
 	. "github.com/vi-sense/vi-sense/app/model"
+	"math"
 	"net/http"
+	"strconv"
 	"time"
 )
 
@@ -12,11 +14,40 @@ type UpdateSensor struct {
 	MeshID string
 }
 
-type Anomaly struct {
-	Gradient    float64
-	Difference    float64
-	Date     time.Time
+type ParamParseError struct {
+	Param string
+	Value string
 }
+
+func (e *ParamParseError) Error() string {
+	return fmt.Sprintf("Error parsing parameter %s with value %s.", e.Param, e.Value)
+}
+
+type AnomalyQueryParams struct {
+	Start      string
+	End        string
+	MaxDiff    float64
+	MaxGrad    float64
+	LowerLimit float64
+	UpperLimit float64
+}
+
+type Anomaly struct {
+	Value      float64
+	Gradient   float64
+	Difference float64
+	Type       AnomalyType
+	Date       time.Time
+}
+
+type AnomalyType string
+
+const (
+	HighDifference  AnomalyType = "High Difference"
+	HighGradient    AnomalyType = "High Gradient"
+	AboveUpperLimit AnomalyType = "Above Upper Limit"
+	BelowLowerLimit AnomalyType = "Below Lower Limit"
+)
 
 //QuerySensors godoc
 //@Summary Query sensors
@@ -28,9 +59,9 @@ type Anomaly struct {
 //@Failure 500 {string} string "internal server error"
 //@Router /sensors [get]
 func QuerySensors() (int, string) {
-	var q []Sensor
-	DB.Find(&q)
-	return http.StatusOK, AsJSON(&q)
+	var r []Sensor
+	DB.Find(&r)
+	return http.StatusOK, AsJSON(&r)
 }
 
 //QuerySensor godoc
@@ -45,13 +76,13 @@ func QuerySensors() (int, string) {
 //@Failure 500 {string} string "internal server error"
 //@Router /sensors/{id} [get]
 func QuerySensor(c *gin.Context) (int, string) {
-	var q Sensor
+	var r Sensor
 	id := c.Param("id")
-	DB.Preload("Data").First(&q, id)
-	if q.ID == 0 {
+	DB.Preload("Data").First(&r, id)
+	if r.ID == 0 {
 		return http.StatusNotFound, AsJSON(gin.H{"error": fmt.Sprintf("Sensor %s not found.", id)})
 	}
-	return http.StatusOK, AsJSON(&q)
+	return http.StatusOK, AsJSON(&r)
 }
 
 //Patch	Sensor godoc
@@ -67,11 +98,11 @@ func QuerySensor(c *gin.Context) (int, string) {
 //@Failure 500 {string} string "internal server error"
 //@Router /sensors/{id} [patch]
 func PatchSensor(c *gin.Context) (int, string) {
-	var q Sensor
+	var r Sensor
 	id := c.Param("id")
-	DB.First(&q, id)
+	DB.First(&r, id)
 
-	if q.ID == 0 {
+	if r.ID == 0 {
 		return http.StatusNotFound, AsJSON(gin.H{"error": fmt.Sprintf("Sensor %s not found.", id)})
 	}
 
@@ -80,45 +111,164 @@ func PatchSensor(c *gin.Context) (int, string) {
 		return http.StatusBadRequest, AsJSON(gin.H{"error": err.Error()})
 	}
 
-	DB.Model(&q).Update(input)
+	DB.Model(&r).Update(input)
 
-	return http.StatusOK, AsJSON(&q)
+	return http.StatusOK, AsJSON(&r)
 }
 
+//QuerySensor godoc
+//@Summary Query anomalies
+//@Description Query anomalies for a specific sensor
+//@Tags sensors
+//@Produce json
+//@Param start query string false "Start Date"
+//@Param end query string false "End Date"
+//@Param max-diff query number false "Maximum Difference"
+//@Param max-grad query number false "Maximum Gradient"
+//@Param lower-limit query number false "Lower Value Limit"
+//@Param upper-limit query number false "Upper Value Limit"
+//@Success 200 {array} Anomaly
+//@Failure 400 {string} string "bad request"
+//@Failure 404 {string} string "not found"
+//@Failure 500 {string} string "internal server error"
+//@Router /sensors/{id}/anomalies [get]
 func QueryAnomalies(c *gin.Context) (int, string) {
-	s := c.Query("start")
-	e := c.Query("end")
-
-	if s == "" {
-		s = time.Time{}.Format(Layout)
-	}
-	if e == "" {
-		e = time.Now().Format(Layout)
+	params, err := getQueryParams(c)
+	if err != nil {
+		return http.StatusBadRequest, AsJSON(gin.H{"error": err.Error()})
 	}
 
-	fmt.Println("start")
-	fmt.Println(s)
-	fmt.Println("end")
-	fmt.Println(e)
-
-	var q []Data
 	id := c.Param("id")
-	DB.Where("sensor_id = ? AND date >= ? AND date <= ?", id, s, e).Find(&q)
 
-	if len(q) == 0 {
+	// check if sensor exists
+	var s Sensor
+	DB.First(&s, id)
+	if s.ID == 0 {
+		return http.StatusNotFound, AsJSON(gin.H{"error": fmt.Sprintf("Sensor %s not found.", id)})
+	}
+
+	// query sensor data within defined time period
+	var r []Data
+	q := DB.Where("sensor_id = ?", id)
+
+	if params.Start != "" {
+		q = q.Or("AND date >= ?", params.Start)
+	}
+
+	if params.End != "" {
+		q = q.Or(" AND date <= ?", params.End)
+	}
+
+	q.Find(&r)
+
+	if len(r) == 0 {
 		return http.StatusNotFound, AsJSON(gin.H{"error": fmt.Sprintf("Data for Sensor %s not found.", id)})
 	}
 
 	var a []Anomaly
 
-	for i := 1; i < len(q); i++ {
-		timeDiff := q[i].Date.Unix() - q[i-1].Date.Unix()
-		valDiff := q[i].Value - q[i-1].Value
-		grad := valDiff / float64(timeDiff)
+	//loop over pre-filtered data to find anomalies
+	for i := 0; i < len(r); i++ {
 
-		d:= time.Unix(q[i-1].Date.Unix() + (timeDiff / 2), 0)
-		a = append(a, Anomaly{Gradient: grad, Difference: valDiff, Date: d})
+		// search for data below the specified lower value limit
+		if r[i].Value < params.LowerLimit {
+			a = append(a, Anomaly{Value: r[i].Value, Gradient: 0.0, Difference: 0.0,
+				Date: r[i].Date, Type: BelowLowerLimit})
+		}
+
+		// search for data above the specified upper value limit
+		if r[i].Value > params.UpperLimit {
+			a = append(a, Anomaly{Value: r[i].Value, Gradient: 0.0, Difference: 0.0,
+				Date: r[i].Date, Type: AboveUpperLimit})
+		}
+
+		// when the user didn't query neither max-grad nor max-diff this calculation can be skipped
+		if params.MaxGrad != math.MaxFloat64 || params.MaxDiff != math.MaxFloat64 {
+
+			// calculate gradient and value difference and add anomaly if they exceed the specified maximum values
+			if i > 0 {
+				timeDiff := r[i].Date.Unix() - r[i-1].Date.Unix()
+				valDiff := r[i].Value - r[i-1].Value
+				grad := valDiff / float64(timeDiff)
+
+				d := time.Unix(r[i-1].Date.Unix()+(timeDiff/2), 0)
+
+				if math.Abs(valDiff) > params.MaxDiff {
+					a = append(a, Anomaly{Value: r[i-1].Value + valDiff/2, Gradient: grad, Difference: valDiff,
+						Date: d, Type: HighDifference})
+				}
+				if math.Abs(grad) > params.MaxGrad {
+					a = append(a, Anomaly{Value: r[i-1].Value + valDiff/2, Gradient: grad, Difference: valDiff,
+						Date: d, Type: HighGradient})
+				}
+			}
+		}
 	}
 
 	return http.StatusOK, AsJSON(a)
+}
+
+func getQueryParams(c *gin.Context) (p *AnomalyQueryParams, e error) {
+	var params AnomalyQueryParams
+	var err error
+
+	v := c.Query("start")
+	params.Start, err = validateDateParam(v)
+	if err != nil {
+		return nil, &ParamParseError{Param: "start", Value: v}
+	}
+
+	v = c.Query("end")
+	params.End, err = validateDateParam(v)
+	if err != nil {
+		return nil, &ParamParseError{Param: "end", Value: v}
+	}
+
+	v = c.Query("max-diff")
+	params.MaxDiff, err = parseFloatParam(v, math.MaxFloat64)
+	if err != nil {
+		return nil, &ParamParseError{Param: "max-diff"}
+	}
+
+	v = c.Query("max-grad")
+	params.MaxGrad, err = parseFloatParam(v, math.MaxFloat64)
+	if err != nil {
+		return nil, &ParamParseError{Param: "max-grad"}
+	}
+
+	v = c.Query("upper-limit")
+	params.UpperLimit, err = parseFloatParam(v, math.MaxFloat64)
+	if err != nil {
+		return nil, &ParamParseError{Param: "upper-limit"}
+	}
+
+	v = c.Query("lower-limit")
+	params.LowerLimit, err = parseFloatParam(v, -math.MaxFloat64)
+	if err != nil {
+		return nil, &ParamParseError{Param: "lower-limit"}
+	}
+
+	return &params, nil
+}
+
+func validateDateParam(s string) (string, error) {
+	if s == "" {
+		return "", nil
+	}
+
+	_, err := time.Parse(Layout, s)
+	if err == nil {
+		return s, nil
+	} else {
+		return "", err
+	}
+}
+
+func parseFloatParam(s string, def float64) (float64, error) {
+	if s == "" {
+		return def, nil
+	}
+
+	return strconv.ParseFloat(s, 64)
+
 }

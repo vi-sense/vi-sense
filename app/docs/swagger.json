@@ -227,9 +227,108 @@
                     }
                 }
             }
+        },
+        "/sensors/{id}/anomalies": {
+            "get": {
+                "description": "Query anomalies for a specific sensor",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "sensors"
+                ],
+                "summary": "Query anomalies",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Start Date",
+                        "name": "start",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "End Date",
+                        "name": "end",
+                        "in": "query"
+                    },
+                    {
+                        "type": "number",
+                        "description": "Maximum Difference",
+                        "name": "max-diff",
+                        "in": "query"
+                    },
+                    {
+                        "type": "number",
+                        "description": "Maximum Gradient",
+                        "name": "max-grad",
+                        "in": "query"
+                    },
+                    {
+                        "type": "number",
+                        "description": "Lower Value Limit",
+                        "name": "lower-limit",
+                        "in": "query"
+                    },
+                    {
+                        "type": "number",
+                        "description": "Upper Value Limit",
+                        "name": "upper-limit",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/api.Anomaly"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "bad request",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "404": {
+                        "description": "not found",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "internal server error",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
         }
     },
     "definitions": {
+        "api.Anomaly": {
+            "type": "object",
+            "properties": {
+                "date": {
+                    "type": "string"
+                },
+                "difference": {
+                    "type": "number"
+                },
+                "gradient": {
+                    "type": "number"
+                },
+                "type": {
+                    "type": "string"
+                },
+                "value": {
+                    "type": "number"
+                }
+            }
+        },
         "api.UpdateSensor": {
             "type": "object",
             "properties": {
