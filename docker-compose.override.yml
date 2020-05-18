@@ -1,5 +1,13 @@
-version: '3'
+version: '3.4'
 services:
   web:
     build: ./app # use this line to build the app locally
     image: visense-dev
+
+  frontend:
+    build:
+      context: ${FRONTEND_DIR}
+      target: develop
+    image: visense-frontend-dev
+    volumes:
+      - ${FRONTEND_DIR}/src:/app/src
