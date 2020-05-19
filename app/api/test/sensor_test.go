@@ -53,6 +53,63 @@ func TestQuerySensorIDMalformed(t *testing.T) {
 	assert.Equal(t, 404, w.Code)
 }
 
+func TestQuerySensorData(t *testing.T) {
+	r := SetupRouter()
+	w := httptest.NewRecorder()
+	req, _ := http.NewRequest(http.MethodGet, "/sensors/1/data", nil)
+	r.ServeHTTP(w, req)
+
+	assert.Equal(t, 200, w.Code)
+
+	expected := "[{\"ID\":1,\"SensorID\":1,\"Value\":7.836,\"Date\":\"2020-01-01T00:00:00Z\"}," +
+		"{\"ID\":2,\"SensorID\":1,\"Value\":7.856,\"Date\":\"2020-01-01T00:01:00Z\"}," +
+		"{\"ID\":3,\"SensorID\":1,\"Value\":7.8,\"Date\":\"2020-01-01T00:02:00Z\"}]"
+	assert.Equal(t, expected, w.Body.String())
+}
+
+func TestQuerySensorDataStartDate(t *testing.T) {
+	r := SetupRouter()
+	w := httptest.NewRecorder()
+	req, _ := http.NewRequest(http.MethodGet, "/sensors/1/data?start_date=2020-01-01 00:02:00", nil)
+	r.ServeHTTP(w, req)
+
+	assert.Equal(t, 200, w.Code)
+
+	expected := "[{\"ID\":3,\"SensorID\":1,\"Value\":7.8,\"Date\":\"2020-01-01T00:02:00Z\"}]"
+	assert.Equal(t, expected, w.Body.String())
+}
+
+func TestQuerySensorDataStartAndEndDate(t *testing.T) {
+	r := SetupRouter()
+	w := httptest.NewRecorder()
+	req, _ := http.NewRequest(http.MethodGet, "/sensors/1/data?start_date=2020-01-01 00:01:00&" +
+		"end_date=2020-01-01 00:02:00", nil)
+	r.ServeHTTP(w, req)
+
+	assert.Equal(t, 200, w.Code)
+
+	expected := "[{\"ID\":2,\"SensorID\":1,\"Value\":7.856,\"Date\":\"2020-01-01T00:01:00Z\"}]"
+	assert.Equal(t, expected, w.Body.String())
+}
+
+func TestQuerySensorDataIDNotFound(t *testing.T) {
+	r := SetupRouter()
+	w := httptest.NewRecorder()
+	req, _ := http.NewRequest(http.MethodGet, "/sensors/13/data", nil)
+	r.ServeHTTP(w, req)
+
+	assert.Equal(t, 404, w.Code)
+}
+
+func TestQuerySensorDataIDMalformed(t *testing.T) {
+	r := SetupRouter()
+	w := httptest.NewRecorder()
+	req, _ := http.NewRequest(http.MethodGet, "/sensors/malformed/data", nil)
+	r.ServeHTTP(w, req)
+
+	assert.Equal(t, 404, w.Code)
+}
+
 func TestQueryAnomaliesMaxGrad(t *testing.T) {
 	r := SetupRouter()
 	w := httptest.NewRecorder()
