@@ -18,31 +18,31 @@ import (
 
 //RoomModel specifies the structure for a single BIM model
 type RoomModel struct {
-	ID          uint
-	Sensors     []Sensor
-	Name        string
-	Description string
-	Url         string
-	ImageUrl    string
+	ID          uint		`json:"id"`
+	Sensors     []Sensor	`json:"sensors"`
+	Name        string		`json:"name"`
+	Description string		`json:"description"`
+	Url         string		`json:"url"`
+	ImageUrl    string		`json:"image_url"`
 }
 
 //Sensor specifies the structure for a single sensor which is located inside a RoomModel
 type Sensor struct {
-	ID              uint
-	RoomModelID     uint
-	Data            []Data
-	MeshID          string
-	Name            string
-	Description     string
-	MeasurementUnit string
+	ID              uint	`json:"id"`
+	RoomModelID     uint	`json:"room_model_id"`
+	Data            []Data	`json:"-"`
+	MeshID          string	`json:"mesh_id"`
+	Name            string	`json:"name"`
+	Description     string	`json:"description"`
+	MeasurementUnit string	`json:"measurement_unit"`
 }
 
 //Data specifies the structure for a single measured value w/ timestamp which was recorded by a sensor
 type Data struct {
-	ID       uint
-	SensorID uint
-	Value    float64
-	Date     time.Time
+	ID       uint			`json:"id"`
+	SensorID uint			`json:"sensor_id"`
+	Value    float64		`json:"value"`
+	Date     time.Time		`json:"date"`
 }
 
 // default mnemonic time

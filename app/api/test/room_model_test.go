@@ -26,17 +26,17 @@ func TestQueryRoomModel(t *testing.T) {
 
 	assert.Equal(t, 200, w.Code)
 
-	expected := "{\"ID\":1,\"Sensors\":[{\"ID\":1,\"RoomModelID\":1,\"Data\":null,\"MeshID\":\"node358\",\"Name\"" +
-		":\"Flow Sensor\",\"Description\":\"A basic flow sensor.\",\"MeasurementUnit\":\"°C\"},{\"ID\":2,\"" +
-		"RoomModelID\":1,\"Data\":null,\"MeshID\":\"node422\",\"Name\":\"Return Flow Sensor\",\"Description\":\"" +
-		"A basic return flow sensor with a longer description. Lorem ipsum dolor sit amet, consetetur sadipscing " +
-		"elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua.\"" +
-		",\"MeasurementUnit\":\"°C\"},{\"ID\":3,\"RoomModelID\":1,\"Data\":null,\"MeshID\":\"node441\",\"Name\":\"" +
-		"Fuel Sensor\",\"Description\":\"A basic thermal sensor\",\"MeasurementUnit\":\"l\"},{\"ID\":4,\"" +
-		"RoomModelID\":1,\"Data\":null,\"MeshID\":\"node505\",\"Name\":\"Pressure Sensor\",\"Description\":\"" +
-		"A basic thermal sensor\",\"MeasurementUnit\":\"bar\"}],\"Name\":\"Facility Mechanical Room\",\"Description\"" +
-		":\"This model shows a facility mechanical room with lots of pipes and stuff.\",\"Url\":\"" +
-		"files/facility-mechanical-room/model.zip\",\"ImageUrl\":\"files/facility-mechanical-room/thumbnail.png\"}"
+	expected := "{\"id\":1,\"sensors\":[{\"id\":1,\"room_model_id\":1,\"mesh_id\":\"node358\",\"name\":\"" +
+		"Flow Sensor\",\"description\":\"A basic flow sensor.\",\"measurement_unit\":\"°C\"},{\"id\":2,\"" +
+		"room_model_id\":1,\"mesh_id\":\"node422\",\"name\":\"Return Flow Sensor\",\"description\":\"" +
+		"A basic return flow sensor with a longer description. Lorem ipsum dolor sit amet, consetetur sadipscing" +
+		" elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua.\"" +
+		",\"measurement_unit\":\"°C\"},{\"id\":3,\"room_model_id\":1,\"mesh_id\":\"node441\",\"name\":\"Fuel Sensor\"" +
+		",\"description\":\"A basic thermal sensor\",\"measurement_unit\":\"l\"},{\"id\":4,\"room_model_id\":1,\"" +
+		"mesh_id\":\"node505\",\"name\":\"Pressure Sensor\",\"description\":\"A basic thermal sensor\",\"" +
+		"measurement_unit\":\"bar\"}],\"name\":\"Facility Mechanical Room\",\"description\":\"" +
+		"This model shows a facility mechanical room with lots of pipes and stuff.\",\"url\":\"" +
+		"files/facility-mechanical-room/model.zip\",\"image_url\":\"files/facility-mechanical-room/thumbnail.png\"}"
 
 	assert.Equal(t, expected, w.Body.String())
 }

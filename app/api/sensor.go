@@ -11,7 +11,7 @@ import (
 )
 
 type UpdateSensor struct {
-	MeshID string
+	MeshID string			`json:"mesh_id"`
 }
 
 type ParamParseError struct {
@@ -24,17 +24,15 @@ func (e *ParamParseError) Error() string {
 }
 
 type Anomaly struct {
-	Value      float64
-	Gradient   float64
-	Difference float64
-	Type       AnomalyType
-	Date       time.Time
+	Type       AnomalyType	`json:"type"`
+	Date       time.Time	`json:"date"`
+	Value      float64 		`json:"value"`
+	Gradient   float64		`json:"gradient"`
 }
 
 type AnomalyType string
 
 const (
-	HighDifference  AnomalyType = "High Difference"
 	HighGradient    AnomalyType = "High Gradient"
 	AboveUpperLimit AnomalyType = "Above Upper Limit"
 	BelowLowerLimit AnomalyType = "Below Lower Limit"
@@ -57,10 +55,10 @@ func QuerySensors() (int, string) {
 
 //QuerySensor godoc
 //@Summary Query sensor
-//@Description Query a single sensor by id.
+//@Description Query a single sensor by id
 //@Tags sensors
 //@Produce json
-//@Param id path int true "SensorId"
+//@Param id path int true "Sensor ID"
 //@Success 200 {object} model.Sensor
 //@Failure 400 {string} string "bad request"
 //@Failure 404 {string} string "not found"
@@ -76,6 +74,19 @@ func QuerySensor(c *gin.Context) (int, string) {
 	return http.StatusOK, AsJSON(&r)
 }
 
+//QuerySensorData godoc
+//@Summary Query sensor data
+//@Description Query data for a specific sensor
+//@Tags sensors
+//@Produce json
+//@Param id path int true "Sensor ID"
+//@Param start_date query string false "Start Date"
+//@Param end_date query string false "End Date"
+//@Success 200 {array} model.Data
+//@Failure 400 {string} string "bad request"
+//@Failure 404 {string} string "not found"
+//@Failure 500 {string} string "internal server error"
+//@Router /sensors/{id}/data [get]
 func QuerySensorData(c *gin.Context) (int, string) {
 	id := c.Param("id")
 
@@ -119,9 +130,9 @@ func QuerySensorData(c *gin.Context) (int, string) {
 //@Description Query anomalies for a specific sensor
 //@Tags sensors
 //@Produce json
+//@Param id path int true "Sensor ID"
 //@Param start_date query string false "Start Date"
 //@Param end_date query string false "End Date"
-//@Param max_diff query number false "Maximum Difference"
 //@Param max_grad query number false "Maximum Gradient"
 //@Param lower_limit query number false "Lower Value Limit"
 //@Param upper_limit query number false "Upper Value Limit"
@@ -136,7 +147,6 @@ func QueryAnomalies(c *gin.Context) (int, string) {
 	queryParams := map[string]interface{}{
 		"start_date":  "",
 		"end_date":    "",
-		"max_diff":    math.MaxFloat64,
 		"max_grad":    math.MaxFloat64,
 		"lower_limit": -math.MaxFloat64,
 		"upper_limit": math.MaxFloat64,
@@ -180,20 +190,20 @@ func QueryAnomalies(c *gin.Context) (int, string) {
 
 		// search for data below the specified lower value limit
 		if r[i].Value < queryParams["lower_limit"].(float64) {
-			a = append(a, Anomaly{Value: r[i].Value, Gradient: 0.0, Difference: 0.0,
+			a = append(a, Anomaly{Value: r[i].Value, Gradient: 0.0,
 				Date: r[i].Date, Type: BelowLowerLimit})
 		}
 
 		// search for data above the specified upper value limit
 		if r[i].Value > queryParams["upper_limit"].(float64) {
-			a = append(a, Anomaly{Value: r[i].Value, Gradient: 0.0, Difference: 0.0,
+			a = append(a, Anomaly{Value: r[i].Value, Gradient: 0.0,
 				Date: r[i].Date, Type: AboveUpperLimit})
 		}
 
 		// when the user didn't query neither max_grad nor max_diff this calculation can be skipped
-		if queryParams["max_diff"] != math.MaxFloat64 || queryParams["max_grad"] != math.MaxFloat64 {
+		if queryParams["max_grad"] != math.MaxFloat64 {
 
-			// calculate gradient and value difference and add anomaly if they exceed the specified maximum values
+			// calculate gradient and add anomaly if they exceed the specified maximum values
 			if i > 0 {
 				timeDiff := r[i].Date.Unix() - r[i-1].Date.Unix()
 				valDiff := r[i].Value - r[i-1].Value
@@ -201,12 +211,8 @@ func QueryAnomalies(c *gin.Context) (int, string) {
 
 				d := time.Unix(r[i-1].Date.Unix()+(timeDiff/2), 0)
 
-				if math.Abs(valDiff) > queryParams["max_diff"].(float64) {
-					a = append(a, Anomaly{Value: r[i-1].Value + valDiff/2, Gradient: grad, Difference: valDiff,
-						Date: d, Type: HighDifference})
-				}
 				if math.Abs(grad) > queryParams["max_grad"].(float64) {
-					a = append(a, Anomaly{Value: r[i-1].Value + valDiff/2, Gradient: grad, Difference: valDiff,
+					a = append(a, Anomaly{Value: r[i-1].Value + valDiff/2, Gradient: grad,
 						Date: d, Type: HighGradient})
 				}
 			}

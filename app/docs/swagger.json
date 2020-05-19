@@ -15,7 +15,7 @@
     "paths": {
         "/models": {
             "get": {
-                "description": "Query all available room models.",
+                "description": "Query all available room models",
                 "produces": [
                     "application/json"
                 ],
@@ -50,7 +50,7 @@
         },
         "/models/{id}": {
             "get": {
-                "description": "Query a single room model by id with containing sensors.",
+                "description": "Query a single room model by id with containing sensors",
                 "produces": [
                     "application/json"
                 ],
@@ -61,7 +61,7 @@
                 "parameters": [
                     {
                         "type": "integer",
-                        "description": "RoomModelID",
+                        "description": "RoomModel ID",
                         "name": "id",
                         "in": "path",
                         "required": true
@@ -132,7 +132,7 @@
         },
         "/sensors/{id}": {
             "get": {
-                "description": "Query a single sensor by id with containing sensor data.",
+                "description": "Query a single sensor by id",
                 "produces": [
                     "application/json"
                 ],
@@ -143,7 +143,7 @@
                 "parameters": [
                     {
                         "type": "integer",
-                        "description": "SensorId",
+                        "description": "Sensor ID",
                         "name": "id",
                         "in": "path",
                         "required": true
@@ -240,6 +240,13 @@
                 "summary": "Query anomalies",
                 "parameters": [
                     {
+                        "type": "integer",
+                        "description": "Sensor ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
                         "type": "string",
                         "description": "Start Date",
                         "name": "start_date",
@@ -249,12 +256,6 @@
                         "type": "string",
                         "description": "End Date",
                         "name": "end_date",
-                        "in": "query"
-                    },
-                    {
-                        "type": "number",
-                        "description": "Maximum Difference",
-                        "name": "max_diff",
                         "in": "query"
                     },
                     {
@@ -306,6 +307,68 @@
                     }
                 }
             }
+        },
+        "/sensors/{id}/data": {
+            "get": {
+                "description": "Query data for a specific sensor",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "sensors"
+                ],
+                "summary": "Query sensor data",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Sensor ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Start Date",
+                        "name": "start_date",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "End Date",
+                        "name": "end_date",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/model.Data"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "bad request",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "404": {
+                        "description": "not found",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "internal server error",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
         }
     },
     "definitions": {
@@ -314,9 +377,6 @@
             "properties": {
                 "date": {
                     "type": "string"
-                },
-                "difference": {
-                    "type": "number"
                 },
                 "gradient": {
                     "type": "number"
@@ -332,7 +392,7 @@
         "api.UpdateSensor": {
             "type": "object",
             "properties": {
-                "meshID": {
+                "mesh_id": {
                     "type": "string"
                 }
             }
@@ -346,7 +406,7 @@
                 "id": {
                     "type": "integer"
                 },
-                "sensorID": {
+                "sensor_id": {
                     "type": "integer"
                 },
                 "value": {
@@ -363,7 +423,7 @@
                 "id": {
                     "type": "integer"
                 },
-                "imageUrl": {
+                "image_url": {
                     "type": "string"
                 },
                 "name": {
@@ -383,28 +443,22 @@
         "model.Sensor": {
             "type": "object",
             "properties": {
-                "data": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/model.Data"
-                    }
-                },
                 "description": {
                     "type": "string"
                 },
                 "id": {
                     "type": "integer"
                 },
-                "measurementUnit": {
+                "measurement_unit": {
                     "type": "string"
                 },
-                "meshID": {
+                "mesh_id": {
                     "type": "string"
                 },
                 "name": {
                     "type": "string"
                 },
-                "roomModelID": {
+                "room_model_id": {
                     "type": "integer"
                 }
             }
