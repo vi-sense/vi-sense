@@ -161,7 +161,7 @@ func QueryAnomalies(c *gin.Context) (int, string) {
 				valDiff := r[i].Value - r[i-1].Value
 				grad := valDiff / float64(timeDiff)
 
-				d := time.Unix(r[i-1].Date.Unix()+(timeDiff/2), 0)
+				d := time.Unix(r[i-1].Date.Unix()+(timeDiff/2), 0).UTC()
 
 				if math.Abs(valDiff) > params.MaxDiff {
 					a = append(a, Anomaly{Value: r[i-1].Value + valDiff/2, Gradient: grad, Difference: valDiff,

@@ -1,15 +1,14 @@
 package api
 
 import (
+	"github.com/stretchr/testify/assert"
+	. "github.com/vi-sense/vi-sense/app/api"
 	"github.com/vi-sense/vi-sense/app/model"
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
 	"strings"
 	"testing"
-
-	"github.com/stretchr/testify/assert"
-	. "github.com/vi-sense/vi-sense/app/api"
 )
 
 func TestQuerySensors(t *testing.T) {
@@ -64,7 +63,7 @@ func TestQueryAnomaliesMaxGrad(t *testing.T) {
 	assert.Equal(t, 200, w.Code)
 
 	expected := "[{\"Value\":7.827999999999999,\"Gradient\":-0.0009333333333333342,\"Difference\"" +
-		":-0.05600000000000005,\"Type\":\"High Gradient\",\"Date\":\"2020-01-01T01:01:30+01:00\"}]"
+		":-0.05600000000000005,\"Type\":\"High Gradient\",\"Date\":\"2020-01-01T00:01:30Z\"}]"
 
 	assert.Equal(t, expected, w.Body.String())
 }
@@ -78,7 +77,7 @@ func TestQueryAnomaliesMaxDiff(t *testing.T) {
 	assert.Equal(t, 200, w.Code)
 
 	expected := "[{\"Value\":7.827999999999999,\"Gradient\":-0.0009333333333333342,\"Difference\"" +
-		":-0.05600000000000005,\"Type\":\"High Difference\",\"Date\":\"2020-01-01T01:01:30+01:00\"}]"
+		":-0.05600000000000005,\"Type\":\"High Difference\",\"Date\":\"2020-01-01T00:01:30Z\"}]"
 
 	assert.Equal(t, expected, w.Body.String())
 }
