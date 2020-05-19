@@ -50,6 +50,10 @@ func SetupRouter() *gin.Engine {
 			c.String(QuerySensor(c))
 		})
 
+		sensors.GET(":id/data", func(c *gin.Context) {
+			c.String(QuerySensorData(c))
+		})
+
 		sensors.GET(":id/anomalies", func(c *gin.Context) {
 			c.String(QueryAnomalies(c))
 		})

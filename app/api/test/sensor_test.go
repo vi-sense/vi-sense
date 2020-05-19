@@ -29,10 +29,8 @@ func TestQuerySensor(t *testing.T) {
 
 	assert.Equal(t, 200, w.Code)
 
-	expected := "{\"ID\":1,\"RoomModelID\":1,\"Data\":[{\"ID\":1,\"SensorID\":1,\"Value\":7.836,\"Date\":\"" +
-		"2020-01-01T00:00:00Z\"},{\"ID\":2,\"SensorID\":1,\"Value\":7.856,\"Date\":\"2020-01-01T00:01:00Z\"}," +
-		"{\"ID\":3,\"SensorID\":1,\"Value\":7.8,\"Date\":\"2020-01-01T00:02:00Z\"}],\"MeshID\":\"node358\",\"" +
-		"Name\":\"Flow Sensor\",\"Description\":\"A basic flow sensor.\",\"MeasurementUnit\":\"°C\"}"
+	expected := "{\"ID\":1,\"RoomModelID\":1,\"Data\":null,\"MeshID\":\"node358\",\"Name\":\"Flow Sensor\"" +
+		",\"Description\":\"A basic flow sensor.\",\"MeasurementUnit\":\"°C\"}"
 
 	assert.Equal(t, expected, w.Body.String())
 }
