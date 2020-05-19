@@ -4,8 +4,6 @@ definitions:
     properties:
       date:
         type: string
-      difference:
-        type: number
       gradient:
         type: number
       type:
@@ -15,7 +13,7 @@ definitions:
     type: object
   api.UpdateSensor:
     properties:
-      meshID:
+      mesh_id:
         type: string
     type: object
   model.Data:
@@ -24,7 +22,7 @@ definitions:
         type: string
       id:
         type: integer
-      sensorID:
+      sensor_id:
         type: integer
       value:
         type: number
@@ -35,7 +33,7 @@ definitions:
         type: string
       id:
         type: integer
-      imageUrl:
+      image_url:
         type: string
       name:
         type: string
@@ -48,21 +46,17 @@ definitions:
     type: object
   model.Sensor:
     properties:
-      data:
-        items:
-          $ref: '#/definitions/model.Data'
-        type: array
       description:
         type: string
       id:
         type: integer
-      measurementUnit:
+      measurement_unit:
         type: string
-      meshID:
+      mesh_id:
         type: string
       name:
         type: string
-      roomModelID:
+      room_model_id:
         type: integer
     type: object
 host: visense.f4.htw-berlin.de:8080
@@ -76,7 +70,7 @@ info:
 paths:
   /models:
     get:
-      description: Query all available room models.
+      description: Query all available room models
       produces:
       - application/json
       responses:
@@ -99,9 +93,9 @@ paths:
       - models
   /models/{id}:
     get:
-      description: Query a single room model by id with containing sensors.
+      description: Query a single room model by id with containing sensors
       parameters:
-      - description: RoomModelID
+      - description: RoomModel ID
         in: path
         name: id
         required: true
@@ -153,9 +147,9 @@ paths:
       - sensors
   /sensors/{id}:
     get:
-      description: Query a single sensor by id with containing sensor data.
+      description: Query a single sensor by id
       parameters:
-      - description: SensorId
+      - description: Sensor ID
         in: path
         name: id
         required: true
@@ -220,6 +214,11 @@ paths:
     get:
       description: Query anomalies for a specific sensor
       parameters:
+      - description: Sensor ID
+        in: path
+        name: id
+        required: true
+        type: integer
       - description: Start Date
         in: query
         name: start_date
@@ -228,10 +227,6 @@ paths:
         in: query
         name: end_date
         type: string
-      - description: Maximum Difference
-        in: query
-        name: max_diff
-        type: number
       - description: Maximum Gradient
         in: query
         name: max_grad
@@ -266,6 +261,47 @@ paths:
           schema:
             type: string
       summary: Query anomalies
+      tags:
+      - sensors
+  /sensors/{id}/data:
+    get:
+      description: Query data for a specific sensor
+      parameters:
+      - description: Sensor ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Start Date
+        in: query
+        name: start_date
+        type: string
+      - description: End Date
+        in: query
+        name: end_date
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/model.Data'
+            type: array
+        "400":
+          description: bad request
+          schema:
+            type: string
+        "404":
+          description: not found
+          schema:
+            type: string
+        "500":
+          description: internal server error
+          schema:
+            type: string
+      summary: Query sensor data
       tags:
       - sensors
 schemes:

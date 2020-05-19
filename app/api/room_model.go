@@ -9,7 +9,7 @@ import (
 
 //QueryRoomModels godoc
 //@Summary Query models
-//@Description Query all available room models.
+//@Description Query all available room models
 //@Tags models
 //@Produce  json
 //@Success 200 {array} model.RoomModel
@@ -24,10 +24,10 @@ func QueryRoomModels() (int, string) {
 
 //QueryRoomModel godoc
 //@Summary Query room model
-//@Description Query a single room model by id with containing sensors.
+//@Description Query a single room model by id with containing sensors
 //@Tags models
 //@Produce json
-//@Param id path int true "RoomModelID"
+//@Param id path int true "RoomModel ID"
 //@Success 200 {object} model.RoomModel
 //@Failure 400 {string} string "bad request"
 //@Failure 404 {string} string "not found"

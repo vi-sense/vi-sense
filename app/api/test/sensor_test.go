@@ -28,10 +28,8 @@ func TestQuerySensor(t *testing.T) {
 
 	assert.Equal(t, 200, w.Code)
 
-	expected := "{\"ID\":1,\"RoomModelID\":1,\"Data\":[{\"ID\":1,\"SensorID\":1,\"Value\":7.836,\"Date\":\"" +
-		"2020-01-01T00:00:00Z\"},{\"ID\":2,\"SensorID\":1,\"Value\":7.856,\"Date\":\"2020-01-01T00:01:00Z\"}," +
-		"{\"ID\":3,\"SensorID\":1,\"Value\":7.8,\"Date\":\"2020-01-01T00:02:00Z\"}],\"MeshID\":\"node358\",\"" +
-		"Name\":\"Flow Sensor\",\"Description\":\"A basic flow sensor.\",\"MeasurementUnit\":\"°C\"}"
+	expected := "{\"id\":1,\"room_model_id\":1,\"mesh_id\":\"node358\",\"name\":\"Flow Sensor\"" +
+		",\"description\":\"A basic flow sensor.\",\"measurement_unit\":\"°C\"}"
 
 	assert.Equal(t, expected, w.Body.String())
 }
@@ -54,6 +52,63 @@ func TestQuerySensorIDMalformed(t *testing.T) {
 	assert.Equal(t, 404, w.Code)
 }
 
+func TestQuerySensorData(t *testing.T) {
+	r := SetupRouter()
+	w := httptest.NewRecorder()
+	req, _ := http.NewRequest(http.MethodGet, "/sensors/1/data", nil)
+	r.ServeHTTP(w, req)
+
+	assert.Equal(t, 200, w.Code)
+
+	expected := "[{\"id\":1,\"sensor_id\":1,\"value\":7.836,\"date\":\"2020-01-01T00:00:00Z\"}," +
+		"{\"id\":2,\"sensor_id\":1,\"value\":7.856,\"date\":\"2020-01-01T00:01:00Z\"}," +
+		"{\"id\":3,\"sensor_id\":1,\"value\":7.8,\"date\":\"2020-01-01T00:02:00Z\"}]"
+	assert.Equal(t, expected, w.Body.String())
+}
+
+func TestQuerySensorDataStartDate(t *testing.T) {
+	r := SetupRouter()
+	w := httptest.NewRecorder()
+	req, _ := http.NewRequest(http.MethodGet, "/sensors/1/data?start_date=2020-01-01 00:02:00", nil)
+	r.ServeHTTP(w, req)
+
+	assert.Equal(t, 200, w.Code)
+
+	expected := "[{\"id\":3,\"sensor_id\":1,\"value\":7.8,\"date\":\"2020-01-01T00:02:00Z\"}]"
+	assert.Equal(t, expected, w.Body.String())
+}
+
+func TestQuerySensorDataStartAndEndDate(t *testing.T) {
+	r := SetupRouter()
+	w := httptest.NewRecorder()
+	req, _ := http.NewRequest(http.MethodGet, "/sensors/1/data?start_date=2020-01-01 00:01:00&"+
+		"end_date=2020-01-01 00:02:00", nil)
+	r.ServeHTTP(w, req)
+
+	assert.Equal(t, 200, w.Code)
+
+	expected := "[{\"id\":2,\"sensor_id\":1,\"value\":7.856,\"date\":\"2020-01-01T00:01:00Z\"}]"
+	assert.Equal(t, expected, w.Body.String())
+}
+
+func TestQuerySensorDataIDNotFound(t *testing.T) {
+	r := SetupRouter()
+	w := httptest.NewRecorder()
+	req, _ := http.NewRequest(http.MethodGet, "/sensors/13/data", nil)
+	r.ServeHTTP(w, req)
+
+	assert.Equal(t, 404, w.Code)
+}
+
+func TestQuerySensorDataIDMalformed(t *testing.T) {
+	r := SetupRouter()
+	w := httptest.NewRecorder()
+	req, _ := http.NewRequest(http.MethodGet, "/sensors/malformed/data", nil)
+	r.ServeHTTP(w, req)
+
+	assert.Equal(t, 404, w.Code)
+}
+
 func TestQueryAnomaliesMaxGrad(t *testing.T) {
 	r := SetupRouter()
 	w := httptest.NewRecorder()
@@ -62,22 +117,8 @@ func TestQueryAnomaliesMaxGrad(t *testing.T) {
 
 	assert.Equal(t, 200, w.Code)
 
-	expected := "[{\"Value\":7.827999999999999,\"Gradient\":-0.0009333333333333342,\"Difference\"" +
-		":-0.05600000000000005,\"Type\":\"High Gradient\",\"Date\":\"2020-01-01T00:01:30Z\"}]"
-
-	assert.Equal(t, expected, w.Body.String())
-}
-
-func TestQueryAnomaliesMaxDiff(t *testing.T) {
-	r := SetupRouter()
-	w := httptest.NewRecorder()
-	req, _ := http.NewRequest(http.MethodGet, "/sensors/1/anomalies?max_diff=0.05", nil)
-	r.ServeHTTP(w, req)
-
-	assert.Equal(t, 200, w.Code)
-
-	expected := "[{\"Value\":7.827999999999999,\"Gradient\":-0.0009333333333333342,\"Difference\"" +
-		":-0.05600000000000005,\"Type\":\"High Difference\",\"Date\":\"2020-01-01T00:01:30Z\"}]"
+	expected := "[{\"type\":\"High Gradient\",\"date\":\"2020-01-01T00:01:30Z\",\"value\":7.827999999999999,\"" +
+		"gradient\":-0.0009333333333333342}]"
 
 	assert.Equal(t, expected, w.Body.String())
 }
@@ -90,8 +131,7 @@ func TestQueryAnomaliesLowerLimit(t *testing.T) {
 
 	assert.Equal(t, 200, w.Code)
 
-	expected := "[{\"Value\":7.8,\"Gradient\":0,\"Difference\":0,\"Type\":\"Below Lower Limit\",\"Date\"" +
-		":\"2020-01-01T00:02:00Z\"}]"
+	expected := "[{\"type\":\"Below Lower Limit\",\"date\":\"2020-01-01T00:02:00Z\",\"value\":7.8,\"gradient\":0}]"
 
 	assert.Equal(t, expected, w.Body.String())
 }
@@ -104,8 +144,8 @@ func TestQueryAnomaliesUpperLimit(t *testing.T) {
 
 	assert.Equal(t, 200, w.Code)
 
-	expected := "[{\"Value\":7.856,\"Gradient\":0,\"Difference\":0,\"Type\":\"Above Upper Limit\"" +
-		",\"Date\":\"2020-01-01T00:01:00Z\"}]"
+	expected := "[{\"type\":\"Above Upper Limit\",\"date\":\"2020-01-01T00:01:00Z\",\"value\"" +
+		":7.856,\"gradient\":0}]"
 
 	assert.Equal(t, expected, w.Body.String())
 }
@@ -118,8 +158,8 @@ func TestQueryAnomaliesStartDate(t *testing.T) {
 
 	assert.Equal(t, 200, w.Code)
 
-	expected := "[{\"Value\":7.8,\"Gradient\":0,\"Difference\":0,\"Type\":\"Above Upper Limit\"" +
-		",\"Date\":\"2020-01-01T00:02:00Z\"}]"
+	expected := "[{\"type\":\"Above Upper Limit\",\"date\":\"2020-01-01T00:02:00Z\",\"value\"" +
+		":7.8,\"gradient\":0}]"
 
 	assert.Equal(t, expected, w.Body.String())
 }
@@ -127,15 +167,15 @@ func TestQueryAnomaliesStartDate(t *testing.T) {
 func TestQueryAnomaliesStartEndDate(t *testing.T) {
 	r := SetupRouter()
 	w := httptest.NewRecorder()
-	req, _ := http.NewRequest(http.MethodGet, "/sensors/1/anomalies?upper_limit=0.0" +
+	req, _ := http.NewRequest(http.MethodGet, "/sensors/1/anomalies?upper_limit=0.0"+
 		"&start_date=2020-01-01 00:00:00&end_date=2020-01-01 00:01:00", nil)
 	r.ServeHTTP(w, req)
 
 	assert.Equal(t, 200, w.Code)
 
 	// attention: functionality between sqlite and postgres is different, therefore different results
-	expected := "[{\"Value\":7.836,\"Gradient\":0,\"Difference\":0,\"Type\":\"Above Upper Limit\"" +
-		",\"Date\":\"2020-01-01T00:00:00Z\"}]"
+	expected := "[{\"type\":\"Above Upper Limit\",\"date\":\"2020-01-01T00:00:00Z\",\"value\"" +
+		":7.836,\"gradient\":0}]"
 
 	assert.Equal(t, expected, w.Body.String())
 }
@@ -177,8 +217,8 @@ func TestPatchSensor(t *testing.T) {
 	assert.Equal(t, 200, w.Code)
 
 	body, _ := ioutil.ReadAll(w.Body)
-	expected := "{\"ID\":1,\"RoomModelID\":1,\"Data\":null,\"MeshID\":\"node357\",\"Name\":\"Flow " +
-		"Sensor\",\"Description\":\"A basic flow sensor.\",\"MeasurementUnit\":\"°C\"}"
+	expected := "{\"id\":1,\"room_model_id\":1,\"mesh_id\":\"node357\",\"name\":\"Flow Sensor\"" +
+		",\"description\":\"A basic flow sensor.\",\"measurement_unit\":\"°C\"}"
 	assert.Equal(t, expected, string(body))
 
 	// change data back
@@ -215,8 +255,8 @@ func TestPatchSensorIgnoreInaccessibleFields(t *testing.T) {
 	assert.Equal(t, 200, w.Code)
 
 	body, _ := ioutil.ReadAll(w.Body)
-	expected := "{\"ID\":1,\"RoomModelID\":1,\"Data\":null,\"MeshID\":\"node358\",\"Name\":\"Flow " +
-		"Sensor\",\"Description\":\"A basic flow sensor.\",\"MeasurementUnit\":\"°C\"}"
+	expected := "{\"id\":1,\"room_model_id\":1,\"mesh_id\":\"node358\",\"name\":\"Flow Sensor\"" +
+		",\"description\":\"A basic flow sensor.\",\"measurement_unit\":\"°C\"}"
 	assert.Equal(t, expected, string(body))
 }
 
@@ -228,8 +268,8 @@ func TestPatchSensorEmptyBody(t *testing.T) {
 	assert.Equal(t, 200, w.Code)
 
 	body, _ := ioutil.ReadAll(w.Body)
-	expected := "{\"ID\":1,\"RoomModelID\":1,\"Data\":null,\"MeshID\":\"node358\",\"Name\":\"Flow " +
-		"Sensor\",\"Description\":\"A basic flow sensor.\",\"MeasurementUnit\":\"°C\"}"
+	expected := "{\"id\":1,\"room_model_id\":1,\"mesh_id\":\"node358\",\"name\":\"Flow Sensor\"" +
+		",\"description\":\"A basic flow sensor.\",\"measurement_unit\":\"°C\"}"
 	assert.Equal(t, expected, string(body))
 }
 
