@@ -24,8 +24,8 @@ func (e *ParamParseError) Error() string {
 }
 
 type AnomalyQueryParams struct {
-	Start      string
-	End        string
+	StartDate  string
+	EndDate    string
 	MaxDiff    float64
 	MaxGrad    float64
 	LowerLimit float64
@@ -85,48 +85,17 @@ func QuerySensor(c *gin.Context) (int, string) {
 	return http.StatusOK, AsJSON(&r)
 }
 
-//Patch	Sensor godoc
-//@Summary Update sensor location
-//@Description Updates the mesh id of a single sensor.
-//@Tags sensors
-//@Accept json
-//@Produce json
-//@Param id path int true "SensorId"
-//@Param sensor body UpdateSensor true "Update sensor"
-//@Success 200 {object} model.Sensor
-//@Failure 400 {string} string "bad request"
-//@Failure 500 {string} string "internal server error"
-//@Router /sensors/{id} [patch]
-func PatchSensor(c *gin.Context) (int, string) {
-	var r Sensor
-	id := c.Param("id")
-	DB.First(&r, id)
-
-	if r.ID == 0 {
-		return http.StatusNotFound, AsJSON(gin.H{"error": fmt.Sprintf("Sensor %s not found.", id)})
-	}
-
-	var input UpdateSensor
-	if err := c.ShouldBindJSON(&input); err != nil {
-		return http.StatusBadRequest, AsJSON(gin.H{"error": err.Error()})
-	}
-
-	DB.Model(&r).Update(input)
-
-	return http.StatusOK, AsJSON(&r)
-}
-
 //QuerySensor godoc
 //@Summary Query anomalies
 //@Description Query anomalies for a specific sensor
 //@Tags sensors
 //@Produce json
-//@Param start query string false "Start Date"
-//@Param end query string false "End Date"
-//@Param max-diff query number false "Maximum Difference"
-//@Param max-grad query number false "Maximum Gradient"
-//@Param lower-limit query number false "Lower Value Limit"
-//@Param upper-limit query number false "Upper Value Limit"
+//@Param start_date query string false "Start Date"
+//@Param end_date query string false "End Date"
+//@Param max_diff query number false "Maximum Difference"
+//@Param max_grad query number false "Maximum Gradient"
+//@Param lower_limit query number false "Lower Value Limit"
+//@Param upper_limit query number false "Upper Value Limit"
 //@Success 200 {array} Anomaly
 //@Failure 400 {string} string "bad request"
 //@Failure 404 {string} string "not found"
@@ -151,12 +120,12 @@ func QueryAnomalies(c *gin.Context) (int, string) {
 	var r []Data
 	q := DB.Where("sensor_id = ?", id)
 
-	if params.Start != "" {
-		q = q.Or("AND date >= ?", params.Start)
+	if params.StartDate != "" {
+		q = q.Where("date >= ?", params.StartDate)
 	}
 
-	if params.End != "" {
-		q = q.Or(" AND date <= ?", params.End)
+	if params.EndDate != "" {
+		q = q.Where("date <= ?", params.EndDate)
 	}
 
 	q.Find(&r)
@@ -165,7 +134,8 @@ func QueryAnomalies(c *gin.Context) (int, string) {
 		return http.StatusNotFound, AsJSON(gin.H{"error": fmt.Sprintf("Data for Sensor %s not found.", id)})
 	}
 
-	var a []Anomaly
+	// create empty object
+	a := make([]Anomaly, 0)
 
 	//loop over pre-filtered data to find anomalies
 	for i := 0; i < len(r); i++ {
@@ -182,7 +152,7 @@ func QueryAnomalies(c *gin.Context) (int, string) {
 				Date: r[i].Date, Type: AboveUpperLimit})
 		}
 
-		// when the user didn't query neither max-grad nor max-diff this calculation can be skipped
+		// when the user didn't query neither max_grad nor max_diff this calculation can be skipped
 		if params.MaxGrad != math.MaxFloat64 || params.MaxDiff != math.MaxFloat64 {
 
 			// calculate gradient and value difference and add anomaly if they exceed the specified maximum values
@@ -212,40 +182,40 @@ func getQueryParams(c *gin.Context) (p *AnomalyQueryParams, e error) {
 	var params AnomalyQueryParams
 	var err error
 
-	v := c.Query("start")
-	params.Start, err = validateDateParam(v)
+	v := c.Query("start_date")
+	params.StartDate, err = validateDateParam(v)
 	if err != nil {
-		return nil, &ParamParseError{Param: "start", Value: v}
+		return nil, &ParamParseError{Param: "start_date", Value: v}
 	}
 
-	v = c.Query("end")
-	params.End, err = validateDateParam(v)
+	v = c.Query("end_date")
+	params.EndDate, err = validateDateParam(v)
 	if err != nil {
-		return nil, &ParamParseError{Param: "end", Value: v}
+		return nil, &ParamParseError{Param: "end_date", Value: v}
 	}
 
-	v = c.Query("max-diff")
+	v = c.Query("max_diff")
 	params.MaxDiff, err = parseFloatParam(v, math.MaxFloat64)
 	if err != nil {
-		return nil, &ParamParseError{Param: "max-diff"}
+		return nil, &ParamParseError{Param: "max_diff"}
 	}
 
-	v = c.Query("max-grad")
+	v = c.Query("max_grad")
 	params.MaxGrad, err = parseFloatParam(v, math.MaxFloat64)
 	if err != nil {
-		return nil, &ParamParseError{Param: "max-grad"}
+		return nil, &ParamParseError{Param: "max_grad"}
 	}
 
-	v = c.Query("upper-limit")
+	v = c.Query("upper_limit")
 	params.UpperLimit, err = parseFloatParam(v, math.MaxFloat64)
 	if err != nil {
-		return nil, &ParamParseError{Param: "upper-limit"}
+		return nil, &ParamParseError{Param: "upper_limit"}
 	}
 
-	v = c.Query("lower-limit")
+	v = c.Query("lower_limit")
 	params.LowerLimit, err = parseFloatParam(v, -math.MaxFloat64)
 	if err != nil {
-		return nil, &ParamParseError{Param: "lower-limit"}
+		return nil, &ParamParseError{Param: "lower_limit"}
 	}
 
 	return &params, nil
@@ -271,4 +241,35 @@ func parseFloatParam(s string, def float64) (float64, error) {
 
 	return strconv.ParseFloat(s, 64)
 
+}
+
+//Patch	Sensor godoc
+//@Summary Update sensor location
+//@Description Updates the mesh id of a single sensor.
+//@Tags sensors
+//@Accept json
+//@Produce json
+//@Param id path int true "SensorId"
+//@Param sensor body UpdateSensor true "Update sensor"
+//@Success 200 {object} model.Sensor
+//@Failure 400 {string} string "bad request"
+//@Failure 500 {string} string "internal server error"
+//@Router /sensors/{id} [patch]
+func PatchSensor(c *gin.Context) (int, string) {
+	var r Sensor
+	id := c.Param("id")
+	DB.First(&r, id)
+
+	if r.ID == 0 {
+		return http.StatusNotFound, AsJSON(gin.H{"error": fmt.Sprintf("Sensor %s not found.", id)})
+	}
+
+	var input UpdateSensor
+	if err := c.ShouldBindJSON(&input); err != nil {
+		return http.StatusBadRequest, AsJSON(gin.H{"error": err.Error()})
+	}
+
+	DB.Model(&r).Update(input)
+
+	return http.StatusOK, AsJSON(&r)
 }

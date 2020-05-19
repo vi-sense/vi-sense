@@ -8,7 +8,7 @@
         "title": "vi-sense BIM API",
         "contact": {},
         "license": {},
-        "version": "0.1.3"
+        "version": "0.1.4"
     },
     "host": "visense.f4.htw-berlin.de:8080",
     "basePath": "/",
@@ -242,37 +242,37 @@
                     {
                         "type": "string",
                         "description": "Start Date",
-                        "name": "start",
+                        "name": "start_date",
                         "in": "query"
                     },
                     {
                         "type": "string",
                         "description": "End Date",
-                        "name": "end",
+                        "name": "end_date",
                         "in": "query"
                     },
                     {
                         "type": "number",
                         "description": "Maximum Difference",
-                        "name": "max-diff",
+                        "name": "max_diff",
                         "in": "query"
                     },
                     {
                         "type": "number",
                         "description": "Maximum Gradient",
-                        "name": "max-grad",
+                        "name": "max_grad",
                         "in": "query"
                     },
                     {
                         "type": "number",
                         "description": "Lower Value Limit",
-                        "name": "lower-limit",
+                        "name": "lower_limit",
                         "in": "query"
                     },
                     {
                         "type": "number",
                         "description": "Upper Value Limit",
-                        "name": "upper-limit",
+                        "name": "upper_limit",
                         "in": "query"
                     }
                 ],

@@ -72,7 +72,7 @@ info:
     sensors and their data.
   license: {}
   title: vi-sense BIM API
-  version: 0.1.3
+  version: 0.1.4
 paths:
   /models:
     get:
@@ -222,27 +222,27 @@ paths:
       parameters:
       - description: Start Date
         in: query
-        name: start
+        name: start_date
         type: string
       - description: End Date
         in: query
-        name: end
+        name: end_date
         type: string
       - description: Maximum Difference
         in: query
-        name: max-diff
+        name: max_diff
         type: number
       - description: Maximum Gradient
         in: query
-        name: max-grad
+        name: max_grad
         type: number
       - description: Lower Value Limit
         in: query
-        name: lower-limit
+        name: lower_limit
         type: number
       - description: Upper Value Limit
         in: query
-        name: upper-limit
+        name: upper_limit
         type: number
       produces:
       - application/json
