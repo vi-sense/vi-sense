@@ -22,7 +22,6 @@ services:
 
   frontend:
     image: romankrajewski/visense-frontend:latest
-    ports:
-      - "8081:8081"
+
 volumes:
   database-volume:
