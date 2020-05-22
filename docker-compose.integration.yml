@@ -9,6 +9,7 @@ services:
   frontend:
     ports:
       - ${FRONTEND_PORT}:8081
-    environment:
-      - STATIC_DIR=/static
-      - PORT=8081
+    env_file:
+      - frontend.env
+    volumes:
+      - $CERT_PATH:/certs/
