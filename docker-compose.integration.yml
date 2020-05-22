@@ -8,8 +8,11 @@ services:
 
   frontend:
     ports:
-      - ${FRONTEND_PORT}:8081
+      - 80:8080
+      - 443:4443
     env_file:
       - frontend.env
     volumes:
-      - $CERT_PATH:/certs/
+      - frontend_cert_cache:/certcache
+volumes:
+  frontend_cert_cache:
