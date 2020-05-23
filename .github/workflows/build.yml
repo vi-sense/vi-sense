@@ -3,6 +3,7 @@ on:
     branches:
       - master
       - dev
+      - https
   pull_request:
     branches:
       - master

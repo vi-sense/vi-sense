@@ -6,6 +6,16 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock
     command: --interval 300 #check for updates every 5 min
 
+  web:
+    ports:
+      - 8080:8080
+      - 44344:4443
+    env_file:
+      - database.env
+      - backend.env
+    volumes:
+      - backend_cert_cache:/certcache
+
   frontend:
     ports:
       - 80:8080
@@ -16,3 +26,4 @@ services:
       - frontend_cert_cache:/certcache
 volumes:
   frontend_cert_cache:
+  backend_cert_cache:
