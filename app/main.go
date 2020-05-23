@@ -29,7 +29,7 @@ func main() {
 
 	r := SetupRouter()
 	ss, err := sslmgr.NewServer(sslmgr.ServerConfig{
-		Hostnames: []string{"visense.f4.htw-berlin.de"},
+		Hostnames: []string{"visense.f4.htw-berlin.de:44344"},
 		HTTPPort:  ":" + os.Getenv("PORT"),
 		HTTPSPort: ":" + os.Getenv("HTTPS_PORT"),
 		Handler:   r,
