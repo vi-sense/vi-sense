@@ -52,8 +52,8 @@ COPY --from=builder /etc/group /etc/group
 
 # Copy our static executable
 COPY --from=builder /go/bin/hello /go/bin/hello
-# Use an unprivileged user.
-USER appuser:appuser
+# Use an unprivileged user. commented out for access to certbot certs
+#USER appuser:appuser
 
 # Run the hello binary.
 ENTRYPOINT ["/go/bin/hello"]

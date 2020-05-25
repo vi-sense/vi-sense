@@ -11,3 +11,5 @@ services:
     image: visense-frontend-dev
     volumes:
       - ${FRONTEND_DIR}/src:/app/src
+    ports:
+      - "8081:8081"
