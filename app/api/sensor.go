@@ -133,9 +133,6 @@ func QuerySensorData(c *gin.Context) (int, string) {
 //@Param id path int true "Sensor ID"
 //@Param start_date query string false "Start Date"
 //@Param end_date query string false "End Date"
-//@Param max_grad query number false "Maximum Gradient"
-//@Param lower_limit query number false "Lower Value Limit"
-//@Param upper_limit query number false "Upper Value Limit"
 //@Success 200 {array} Anomaly
 //@Failure 400 {string} string "bad request"
 //@Failure 404 {string} string "not found"
@@ -265,7 +262,10 @@ func parseFloatParam(s string, def float64) (float64, error) {
 //@Accept json
 //@Produce json
 //@Param id path int true "SensorId"
-//@Param sensor body UpdateSensor true "Update sensor"
+//@Param mesh_id body string false "MeshId"
+//@Param lower_bound body number false "Lower Bound"
+//@Param upper_bound body number false "Upper Bound"
+//@Param gradient_bound body number false "Gradient Bound"
 //@Success 200 {object} model.Sensor
 //@Failure 400 {string} string "bad request"
 //@Failure 500 {string} string "internal server error"

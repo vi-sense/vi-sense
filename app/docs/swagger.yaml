@@ -6,20 +6,19 @@ definitions:
         type: string
       gradient:
         type: number
-      type:
-        type: string
+      types:
+        items:
+          type: string
+        type: array
       value:
         type: number
-    type: object
-  api.UpdateSensor:
-    properties:
-      mesh_id:
-        type: string
     type: object
   model.Data:
     properties:
       date:
         type: string
+      gradient:
+        type: number
       id:
         type: integer
       sensor_id:
@@ -48,8 +47,14 @@ definitions:
     properties:
       description:
         type: string
+      gradient_bound:
+        type: number
       id:
         type: integer
+      latest_value:
+        type: number
+      lower_bound:
+        type: number
       measurement_unit:
         type: string
       mesh_id:
@@ -58,15 +63,17 @@ definitions:
         type: string
       room_model_id:
         type: integer
+      upper_bound:
+        type: number
     type: object
-host: visense.f4.htw-berlin.de:8080
+host: visense.f4.htw-berlin.de:44344
 info:
   contact: {}
   description: This API provides information about 3D room models with associated
     sensors and their data.
   license: {}
   title: vi-sense BIM API
-  version: 0.1.4
+  version: 0.1.5
 paths:
   /models:
     get:
@@ -186,12 +193,26 @@ paths:
         name: id
         required: true
         type: integer
-      - description: Update sensor
+      - description: MeshId
         in: body
-        name: sensor
-        required: true
+        name: mesh_id
         schema:
-          $ref: '#/definitions/api.UpdateSensor'
+          type: string
+      - description: Lower Bound
+        in: body
+        name: lower_bound
+        schema:
+          type: number
+      - description: Upper Bound
+        in: body
+        name: upper_bound
+        schema:
+          type: number
+      - description: Gradient Bound
+        in: body
+        name: gradient_bound
+        schema:
+          type: number
       produces:
       - application/json
       responses:
@@ -227,18 +248,6 @@ paths:
         in: query
         name: end_date
         type: string
-      - description: Maximum Gradient
-        in: query
-        name: max_grad
-        type: number
-      - description: Lower Value Limit
-        in: query
-        name: lower_limit
-        type: number
-      - description: Upper Value Limit
-        in: query
-        name: upper_limit
-        type: number
       produces:
       - application/json
       responses:
@@ -305,5 +314,5 @@ paths:
       tags:
       - sensors
 schemes:
-- http
+- https
 swagger: "2.0"

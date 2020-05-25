@@ -1,6 +1,6 @@
 {
     "schemes": [
-        "http"
+        "https"
     ],
     "swagger": "2.0",
     "info": {
@@ -8,9 +8,9 @@
         "title": "vi-sense BIM API",
         "contact": {},
         "license": {},
-        "version": "0.1.4"
+        "version": "0.1.5"
     },
-    "host": "visense.f4.htw-berlin.de:8080",
+    "host": "visense.f4.htw-berlin.de:44344",
     "basePath": "/",
     "paths": {
         "/models": {
@@ -197,12 +197,35 @@
                         "required": true
                     },
                     {
-                        "description": "Update sensor",
-                        "name": "sensor",
+                        "description": "MeshId",
+                        "name": "mesh_id",
                         "in": "body",
-                        "required": true,
                         "schema": {
-                            "$ref": "#/definitions/api.UpdateSensor"
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "description": "Lower Bound",
+                        "name": "lower_bound",
+                        "in": "body",
+                        "schema": {
+                            "type": "number"
+                        }
+                    },
+                    {
+                        "description": "Upper Bound",
+                        "name": "upper_bound",
+                        "in": "body",
+                        "schema": {
+                            "type": "number"
+                        }
+                    },
+                    {
+                        "description": "Gradient Bound",
+                        "name": "gradient_bound",
+                        "in": "body",
+                        "schema": {
+                            "type": "number"
                         }
                     }
                 ],
@@ -256,24 +279,6 @@
                         "type": "string",
                         "description": "End Date",
                         "name": "end_date",
-                        "in": "query"
-                    },
-                    {
-                        "type": "number",
-                        "description": "Maximum Gradient",
-                        "name": "max_grad",
-                        "in": "query"
-                    },
-                    {
-                        "type": "number",
-                        "description": "Lower Value Limit",
-                        "name": "lower_limit",
-                        "in": "query"
-                    },
-                    {
-                        "type": "number",
-                        "description": "Upper Value Limit",
-                        "name": "upper_limit",
                         "in": "query"
                     }
                 ],
@@ -381,19 +386,14 @@
                 "gradient": {
                     "type": "number"
                 },
-                "type": {
-                    "type": "string"
+                "types": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
                 },
                 "value": {
                     "type": "number"
-                }
-            }
-        },
-        "api.UpdateSensor": {
-            "type": "object",
-            "properties": {
-                "mesh_id": {
-                    "type": "string"
                 }
             }
         },
@@ -402,6 +402,9 @@
             "properties": {
                 "date": {
                     "type": "string"
+                },
+                "gradient": {
+                    "type": "number"
                 },
                 "id": {
                     "type": "integer"
@@ -446,8 +449,17 @@
                 "description": {
                     "type": "string"
                 },
+                "gradient_bound": {
+                    "type": "number"
+                },
                 "id": {
                     "type": "integer"
+                },
+                "latest_value": {
+                    "type": "number"
+                },
+                "lower_bound": {
+                    "type": "number"
                 },
                 "measurement_unit": {
                     "type": "string"
@@ -460,6 +472,9 @@
                 },
                 "room_model_id": {
                     "type": "integer"
+                },
+                "upper_bound": {
+                    "type": "number"
                 }
             }
         }
