@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"fmt"
 	"io"
+	"math"
 	"os"
 	"strconv"
 	"time"
@@ -13,36 +14,40 @@ import (
 	"github.com/jinzhu/gorm"
 	_ "github.com/jinzhu/gorm/dialects/postgres"
 	_ "github.com/jinzhu/gorm/dialects/sqlite"
-
 )
 
 //RoomModel specifies the structure for a single BIM model
 type RoomModel struct {
-	ID          uint		`json:"id"`
-	Sensors     []Sensor	`json:"sensors"`
-	Name        string		`json:"name"`
-	Description string		`json:"description"`
-	Url         string		`json:"url"`
-	ImageUrl    string		`json:"image_url"`
+	ID          uint     `json:"id"`
+	Sensors     []Sensor `json:"sensors"`
+	Name        string   `json:"name"`
+	Description string   `json:"description"`
+	Url         string   `json:"url"`
+	ImageUrl    string   `json:"image_url"`
 }
 
 //Sensor specifies the structure for a single sensor which is located inside a RoomModel
 type Sensor struct {
-	ID              uint	`json:"id"`
-	RoomModelID     uint	`json:"room_model_id"`
-	Data            []Data	`json:"-"`
-	MeshID          string	`json:"mesh_id"`
-	Name            string	`json:"name"`
-	Description     string	`json:"description"`
-	MeasurementUnit string	`json:"measurement_unit"`
+	ID              uint     `json:"id"`
+	RoomModelID     uint     `json:"room_model_id"`
+	LatestValue     float64  `json:"latest_value" gorm:"-"`
+	Data            []Data   `json:"-"`
+	MeshID          string   `json:"mesh_id"`
+	Name            string   `json:"name"`
+	Description     string   `json:"description"`
+	MeasurementUnit string   `json:"measurement_unit"`
+	UpperBound      *float64 `json:"upper_bound"`
+	LowerBound      *float64 `json:"lower_bound"`
+	GradientBound   *float64 `json:"gradient_bound"`
 }
 
 //Data specifies the structure for a single measured value w/ timestamp which was recorded by a sensor
 type Data struct {
-	ID       uint			`json:"id"`
-	SensorID uint			`json:"sensor_id"`
-	Value    float64		`json:"value"`
-	Date     time.Time		`json:"date"`
+	ID       uint      `json:"id"`
+	SensorID uint      `json:"sensor_id"`
+	Value    float64   `json:"value"`
+	Gradient float64   `json:"gradient"`
+	Date     time.Time `json:"date"`
 }
 
 // default mnemonic time
@@ -56,7 +61,9 @@ var DB *gorm.DB
 func SetupDatabase(drop bool) {
 	// TODO check if ssl mode can be enabled later
 	dbInfo := fmt.Sprintf("host=%s port=%s user=%s dbname=%s password=%s sslmode=disable",
-		os.Getenv("POSTGRES_HOST"), os.Getenv("POSTGRES_PORT"), os.Getenv("POSTGRES_USER"), os.Getenv("POSTGRES_DB"), os.Getenv("POSTGRES_PASSWORD"))
+		os.Getenv("POSTGRES_HOST"), os.Getenv("POSTGRES_PORT"), os.Getenv("POSTGRES_USER"),
+		os.Getenv("POSTGRES_DB"), os.Getenv("POSTGRES_PASSWORD"))
+
 	var err error
 	DB, err = gorm.Open("postgres", dbInfo)
 
@@ -96,10 +103,13 @@ func CreateMockData(sampleDataPath string, dataLimit int) {
 	}
 
 	m3 := &RoomModel{
-		Name:        "Overhead MEP Installation",
-		Description: "This model shows a overhead MEP installation. To make things look better this model has a longer description. Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua.",
-		Url:         "files/overhead-mep-installation/model.zip",
-		ImageUrl:    "files/overhead-mep-installation/thumbnail.png",
+		Name: "Overhead MEP Installation",
+		Description: "This model shows a overhead MEP installation. To make things look better this model" +
+			" has a longer description. Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam" +
+			" nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua.",
+
+		Url:      "files/overhead-mep-installation/model.zip",
+		ImageUrl: "files/overhead-mep-installation/thumbnail.png",
 	}
 
 	models = append(models, m1, m2, m3)
@@ -119,17 +129,22 @@ func CreateMockData(sampleDataPath string, dataLimit int) {
 			Description:     "A basic flow sensor.",
 			MeshID:          meshIds[i][0],
 			MeasurementUnit: "°C",
-			Data:            loadSampleData(fmt.Sprintf("%s/sensors/sensor_004_vorlauf_deg-celcius.csv", sampleDataPath), dataLimit),
+			Data: loadSampleData(
+				fmt.Sprintf("%s/sensors/sensor_004_vorlauf_deg-celcius.csv", sampleDataPath), dataLimit),
 		}
 		DB.Create(&s1)
 
 		s2 := &Sensor{
-			RoomModelID:     m.ID,
-			Name:            "Return Flow Sensor",
-			Description:     "A basic return flow sensor with a longer description. Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua.",
+			RoomModelID: m.ID,
+			Name:        "Return Flow Sensor",
+			Description: "A basic return flow sensor with a longer description. Lorem ipsum dolor sit amet," +
+				" consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna" +
+				" aliquyam erat, sed diam voluptua.",
+
 			MeshID:          meshIds[i][1],
 			MeasurementUnit: "°C",
-			Data:            loadSampleData(fmt.Sprintf("%s/sensors/sensor_003_ruecklauf_deg-celcius.csv", sampleDataPath), dataLimit),
+			Data: loadSampleData(
+				fmt.Sprintf("%s/sensors/sensor_003_ruecklauf_deg-celcius.csv", sampleDataPath), dataLimit),
 		}
 		DB.Create(&s2)
 
@@ -139,7 +154,8 @@ func CreateMockData(sampleDataPath string, dataLimit int) {
 			Description:     "A basic thermal sensor",
 			MeshID:          meshIds[i][2],
 			MeasurementUnit: "l",
-			Data:            loadSampleData(fmt.Sprintf("%s/sensors/sensor_002_fuel_litres.csv", sampleDataPath), dataLimit),
+			Data: loadSampleData(
+				fmt.Sprintf("%s/sensors/sensor_002_fuel_litres.csv", sampleDataPath), dataLimit),
 		}
 		DB.Create(&s3)
 
@@ -149,7 +165,8 @@ func CreateMockData(sampleDataPath string, dataLimit int) {
 			Description:     "A basic thermal sensor",
 			MeshID:          meshIds[i][3],
 			MeasurementUnit: "bar",
-			Data:            loadSampleData(fmt.Sprintf("%s/sensors/sensor_001_pressure_bar.csv", sampleDataPath), dataLimit),
+			Data: loadSampleData(
+				fmt.Sprintf("%s/sensors/sensor_001_pressure_bar.csv", sampleDataPath), dataLimit),
 		}
 		DB.Create(&s4)
 	}
@@ -210,13 +227,27 @@ func loadSampleData(path string, dataLimit int) []Data {
 		s := fmt.Sprintf("%s %s", line[0], line[1])
 		t, _ := time.Parse(Layout, s)
 		v, _ := strconv.ParseFloat(line[2], 64)
+		d := Data{
+			Date:     t,
+			Value:    v,
+			Gradient: 0.0,
+		}
 
-		data = append(data, Data{
-			Date:  t,
-			Value: v,
-		})
+		if len(data) > 0 {
+			d.Gradient, _, _ = calculateGradient(data[len(data)-1], d)
+		}
+
+		data = append(data, d)
 
 		i++
 	}
 	return data
+}
+
+func calculateGradient(d1 Data, d2 Data) (float64, float64, int64) {
+	d := d2.Value - d1.Value
+	dTime := d2.Date.Unix() - d1.Date.Unix()
+	grad := d / float64(dTime)
+	grad = math.Round(grad*100000) / 100000
+	return grad, d, dTime
 }

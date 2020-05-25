@@ -10,32 +10,32 @@ import (
 	"time"
 )
 
-type UpdateSensor struct {
-	MeshID string			`json:"mesh_id"`
-}
-
 type ParamParseError struct {
 	Param string
 	Value string
 }
 
 func (e *ParamParseError) Error() string {
-	return fmt.Sprintf("Error parsing parameter '%s' with value '%s'.", e.Param, e.Value)
+	if e.Value != "" {
+		return fmt.Sprintf("Error parsing parameter '%s' with value '%s'.", e.Param, e.Value)
+	}
+	return fmt.Sprintf("Error parsing parameter '%s'.", e.Param)
 }
 
 type Anomaly struct {
-	Type       AnomalyType	`json:"type"`
-	Date       time.Time	`json:"date"`
-	Value      float64 		`json:"value"`
-	Gradient   float64		`json:"gradient"`
+	Types    []AnomalyType `json:"types"`
+	Date     time.Time     `json:"date"`
+	Value    float64       `json:"value"`
+	Gradient float64       `json:"gradient"`
 }
 
 type AnomalyType string
 
 const (
-	HighGradient    AnomalyType = "High Gradient"
-	AboveUpperLimit AnomalyType = "Above Upper Limit"
-	BelowLowerLimit AnomalyType = "Below Lower Limit"
+	UpwardGradient   AnomalyType = "High Upward Gradient"
+	DownwardGradient AnomalyType = "High Downward Gradient"
+	AboveUpperLimit  AnomalyType = "Above Upper Limit"
+	BelowLowerLimit  AnomalyType = "Below Lower Limit"
 )
 
 //QuerySensors godoc
@@ -91,8 +91,8 @@ func QuerySensorData(c *gin.Context) (int, string) {
 	id := c.Param("id")
 
 	queryParams := map[string]interface{}{
-		"start_date":  "",
-		"end_date":    "",
+		"start_date": "",
+		"end_date":   "",
 	}
 
 	// check if sensor exists
@@ -145,11 +145,8 @@ func QueryAnomalies(c *gin.Context) (int, string) {
 	id := c.Param("id")
 
 	queryParams := map[string]interface{}{
-		"start_date":  "",
-		"end_date":    "",
-		"max_grad":    math.MaxFloat64,
-		"lower_limit": -math.MaxFloat64,
-		"upper_limit": math.MaxFloat64,
+		"start_date": "",
+		"end_date":   "",
 	}
 
 	// check if sensor exists
@@ -164,8 +161,6 @@ func QueryAnomalies(c *gin.Context) (int, string) {
 		return http.StatusBadRequest, AsJSON(gin.H{"error": err.Error()})
 	}
 
-	// query sensor data within defined time period
-	var r []Data
 	q := DB.Where("sensor_id = ?", id)
 
 	if queryParams["start_date"] != "" {
@@ -176,53 +171,45 @@ func QueryAnomalies(c *gin.Context) (int, string) {
 		q = q.Where("date <= ?", queryParams["end_date"])
 	}
 
+	var r []Data
 	q.Find(&r)
 
 	if len(r) == 0 {
 		return http.StatusNotFound, AsJSON(gin.H{"error": fmt.Sprintf("Data for Sensor %s not found.", id)})
 	}
 
-	// create empty object
 	a := make([]Anomaly, 0)
 
-	//loop over pre-filtered data to find anomalies
-	for i := 0; i < len(r); i++ {
+	for _, d := range r {
+		var types []AnomalyType
 
 		// search for data below the specified lower value limit
-		if r[i].Value < queryParams["lower_limit"].(float64) {
-			a = append(a, Anomaly{Value: r[i].Value, Gradient: 0.0,
-				Date: r[i].Date, Type: BelowLowerLimit})
+		if s.LowerBound != nil && d.Value < *s.LowerBound {
+			types = append(types, BelowLowerLimit)
 		}
 
-		// search for data above the specified upper value limit
-		if r[i].Value > queryParams["upper_limit"].(float64) {
-			a = append(a, Anomaly{Value: r[i].Value, Gradient: 0.0,
-				Date: r[i].Date, Type: AboveUpperLimit})
+		// search for data below the specified lower value limit
+		if s.UpperBound != nil && d.Value > *s.UpperBound {
+			types = append(types, AboveUpperLimit)
 		}
 
-		// when the user didn't query neither max_grad nor max_diff this calculation can be skipped
-		if queryParams["max_grad"] != math.MaxFloat64 {
-
-			// calculate gradient and add anomaly if they exceed the specified maximum values
-			if i > 0 {
-				timeDiff := r[i].Date.Unix() - r[i-1].Date.Unix()
-				valDiff := r[i].Value - r[i-1].Value
-				grad := valDiff / float64(timeDiff)
-
-				d := time.Unix(r[i-1].Date.Unix()+(timeDiff/2), 0).UTC()
-
-				if math.Abs(grad) > queryParams["max_grad"].(float64) {
-					a = append(a, Anomaly{Value: r[i-1].Value + valDiff/2, Gradient: grad,
-						Date: d, Type: HighGradient})
-				}
+		if s.GradientBound != nil && (math.Abs(d.Gradient) > *s.GradientBound) {
+			if d.Gradient >= 0 {
+				types = append(types, UpwardGradient)
+			} else {
+				types = append(types, DownwardGradient)
 			}
+		}
+
+		if len(types) > 0 {
+			a = append(a, Anomaly{Gradient: d.Gradient, Types: types, Value: d.Value, Date: d.Date})
 		}
 	}
 
 	return http.StatusOK, AsJSON(a)
 }
 
-func fillQueryParams(c *gin.Context, m *map[string]interface{}) (e error) {
+func fillQueryParams(c *gin.Context, m *map[string]interface{}) error {
 	var err error
 
 	// loop over every entry of the passed map
@@ -292,12 +279,46 @@ func PatchSensor(c *gin.Context) (int, string) {
 		return http.StatusNotFound, AsJSON(gin.H{"error": fmt.Sprintf("Sensor %s not found.", id)})
 	}
 
-	var input UpdateSensor
-	if err := c.ShouldBindJSON(&input); err != nil {
+	var i map[string]interface{}
+	if err := c.ShouldBindJSON(&i); err != nil {
 		return http.StatusBadRequest, AsJSON(gin.H{"error": err.Error()})
 	}
 
-	DB.Model(&r).Update(input)
+	if err := validateUpdateValues(&i); err != nil {
+		return http.StatusBadRequest, AsJSON(gin.H{"error": err.Error()})
+	}
+
+	DB.Model(&r).Update(i)
 
 	return http.StatusOK, AsJSON(&r)
+}
+
+func validateUpdateValues(m *map[string]interface{}) error {
+	var unknown []string
+
+	for k, v := range *m {
+		switch k {
+		case "mesh_id":
+			if _, ok := v.(string); !ok {
+				return &ParamParseError{
+					Param: k,
+				}
+			}
+
+		case "lower_bound", "upper_bound", "gradient_bound":
+			if _, ok := v.(float64); !ok && v != nil {
+				return &ParamParseError{
+					Param: k,
+				}
+			}
+		default:
+			unknown = append(unknown, k)
+		}
+	}
+
+	for _, u := range unknown {
+		delete(*m, u)
+	}
+
+	return nil
 }
