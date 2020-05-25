@@ -13,6 +13,17 @@ definitions:
       value:
         type: number
     type: object
+  api.UpdateSensor:
+    properties:
+      gradient_bound:
+        type: number
+      lower_bound:
+        type: number
+      mesh_id:
+        type: string
+      upper_bound:
+        type: number
+    type: object
   model.Data:
     properties:
       date:
@@ -186,33 +197,19 @@ paths:
     patch:
       consumes:
       - application/json
-      description: Updates the mesh id of a single sensor.
+      description: Updates the mesh id and anomaly preferences of a single sensor.
       parameters:
       - description: SensorId
         in: path
         name: id
         required: true
         type: integer
-      - description: MeshId
+      - description: UpdateSensor
         in: body
-        name: mesh_id
+        name: update_sensor
+        required: true
         schema:
-          type: string
-      - description: Lower Bound
-        in: body
-        name: lower_bound
-        schema:
-          type: number
-      - description: Upper Bound
-        in: body
-        name: upper_bound
-        schema:
-          type: number
-      - description: Gradient Bound
-        in: body
-        name: gradient_bound
-        schema:
-          type: number
+          $ref: '#/definitions/api.UpdateSensor'
       produces:
       - application/json
       responses:
@@ -228,7 +225,7 @@ paths:
           description: internal server error
           schema:
             type: string
-      summary: Update sensor location
+      summary: Update sensor preferences
       tags:
       - sensors
   /sensors/{id}/anomalies:

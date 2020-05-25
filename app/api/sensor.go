@@ -10,6 +10,13 @@ import (
 	"time"
 )
 
+type UpdateSensor struct {
+	MeshId string `json:"mesh_id"`
+	LowerBound float64 `json:"lower_bound"`
+	UpperBound float64 `json:"upper_bound"`
+	GradientBound float64 `json:"gradient_bound"`
+}
+
 type ParamParseError struct {
 	Param string
 	Value string
@@ -256,16 +263,13 @@ func parseFloatParam(s string, def float64) (float64, error) {
 }
 
 //Patch	Sensor godoc
-//@Summary Update sensor location
-//@Description Updates the mesh id of a single sensor.
+//@Summary Update sensor preferences
+//@Description Updates the mesh id and anomaly preferences of a single sensor.
 //@Tags sensors
 //@Accept json
 //@Produce json
 //@Param id path int true "SensorId"
-//@Param mesh_id body string false "MeshId"
-//@Param lower_bound body number false "Lower Bound"
-//@Param upper_bound body number false "Upper Bound"
-//@Param gradient_bound body number false "Gradient Bound"
+//@Param update_sensor body UpdateSensor true "UpdateSensor"
 //@Success 200 {object} model.Sensor
 //@Failure 400 {string} string "bad request"
 //@Failure 500 {string} string "internal server error"

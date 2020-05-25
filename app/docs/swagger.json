@@ -177,7 +177,7 @@
                 }
             },
             "patch": {
-                "description": "Updates the mesh id of a single sensor.",
+                "description": "Updates the mesh id and anomaly preferences of a single sensor.",
                 "consumes": [
                     "application/json"
                 ],
@@ -187,7 +187,7 @@
                 "tags": [
                     "sensors"
                 ],
-                "summary": "Update sensor location",
+                "summary": "Update sensor preferences",
                 "parameters": [
                     {
                         "type": "integer",
@@ -197,35 +197,12 @@
                         "required": true
                     },
                     {
-                        "description": "MeshId",
-                        "name": "mesh_id",
+                        "description": "UpdateSensor",
+                        "name": "update_sensor",
                         "in": "body",
+                        "required": true,
                         "schema": {
-                            "type": "string"
-                        }
-                    },
-                    {
-                        "description": "Lower Bound",
-                        "name": "lower_bound",
-                        "in": "body",
-                        "schema": {
-                            "type": "number"
-                        }
-                    },
-                    {
-                        "description": "Upper Bound",
-                        "name": "upper_bound",
-                        "in": "body",
-                        "schema": {
-                            "type": "number"
-                        }
-                    },
-                    {
-                        "description": "Gradient Bound",
-                        "name": "gradient_bound",
-                        "in": "body",
-                        "schema": {
-                            "type": "number"
+                            "$ref": "#/definitions/api.UpdateSensor"
                         }
                     }
                 ],
@@ -393,6 +370,23 @@
                     }
                 },
                 "value": {
+                    "type": "number"
+                }
+            }
+        },
+        "api.UpdateSensor": {
+            "type": "object",
+            "properties": {
+                "gradient_bound": {
+                    "type": "number"
+                },
+                "lower_bound": {
+                    "type": "number"
+                },
+                "mesh_id": {
+                    "type": "string"
+                },
+                "upper_bound": {
                     "type": "number"
                 }
             }
