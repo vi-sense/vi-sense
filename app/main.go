@@ -6,6 +6,7 @@ import (
 	_ "github.com/vi-sense/vi-sense/app/docs"
 	. "github.com/vi-sense/vi-sense/app/model"
 	"io/ioutil"
+	"log"
 )
 
 func main() {
@@ -22,8 +23,9 @@ func main() {
 
 	r := SetupRouter()
 	// Listen and Server in 0.0.0.0:8080
-	err = r.Run(":8080")
+	err = r.RunTLS(":44344", "/certs/live/visense.f4.htw-berlin.de/fullchain.pem", "/certs/live/visense.f4.htw-berlin.de/privkey.pem")
 	if err != nil {
-		panic(r)
+		log.Println(err)
+		log.Fatal(r.Run(":8080"))
 	}
 }
