@@ -1,9 +1,10 @@
 package api
 
 import (
+	"encoding/json"
+	"fmt"
 	"github.com/stretchr/testify/assert"
 	. "github.com/vi-sense/vi-sense/app/api"
-	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -16,6 +17,8 @@ func TestQuerySensors(t *testing.T) {
 	req, _ := http.NewRequest(http.MethodGet, "/sensors", nil)
 	r.ServeHTTP(w, req)
 
+	fmt.Println(w.Body.String())
+
 	assert.Equal(t, 200, w.Code)
 }
 
@@ -27,9 +30,10 @@ func TestQuerySensor(t *testing.T) {
 
 	assert.Equal(t, 200, w.Code)
 
-	expected := "{\"id\":1,\"room_model_id\":1,\"latest_value\":0,\"mesh_id\":\"node358\",\"name\":\"Flow Sensor\"" +
-		",\"description\":\"A basic flow sensor.\",\"measurement_unit\":\"°C\",\"upper_bound\":null,\"lower_bound\"" +
-		":null,\"gradient_bound\":null}"
+	expected := "{\"id\":1,\"room_model_id\":1,\"latest_data\":{\"id\":3,\"sensor_id\":1,\"value\":7.8," +
+		"\"gradient\":-0.00093,\"date\":\"2020-01-01T00:02:00Z\"},\"mesh_id\":\"node358\",\"name\":\"Flow Sensor\"," +
+		"\"description\":\"A basic flow sensor.\",\"measurement_unit\":\"°C\",\"upper_bound\":null," +
+		"\"lower_bound\":null,\"gradient_bound\":null}"
 
 	assert.Equal(t, expected, w.Body.String())
 }
@@ -113,21 +117,19 @@ func TestQuerySensorDataIDMalformed(t *testing.T) {
 func TestPatchSensor(t *testing.T) {
 	r := SetupRouter()
 	w := httptest.NewRecorder()
-	i := "{\"mesh_id\":\"node357\"}"
-	req, _ := http.NewRequest(http.MethodPatch, "/sensors/1", strings.NewReader(i))
+	i := map[string]interface{}{"mesh_id": "node357"}
+	req, _ := http.NewRequest(http.MethodPatch, "/sensors/1", strings.NewReader(AsJSON(i)))
 	r.ServeHTTP(w, req)
 	assert.Equal(t, 200, w.Code)
 
-	body, _ := ioutil.ReadAll(w.Body)
-	expected := "{\"id\":1,\"room_model_id\":1,\"latest_value\":0,\"mesh_id\":\"node357\",\"name\":\"Flow Sensor\"" +
-		",\"description\":\"A basic flow sensor.\",\"measurement_unit\":\"°C\",\"upper_bound\":null,\"lower_bound\"" +
-		":null,\"gradient_bound\":null}"
+	var m map[string]interface{}
+	_ = json.Unmarshal(w.Body.Bytes(), &m)
 
-	assert.Equal(t, expected, string(body))
+	assert.Equal(t, i["mesh_id"], m["mesh_id"])
 
 	// change data back
-	i = "{\"mesh_id\":\"node358\"}"
-	req, _ = http.NewRequest(http.MethodPatch, "/sensors/1", strings.NewReader(i))
+	i = map[string]interface{}{"mesh_id": "node357"}
+	req, _ = http.NewRequest(http.MethodPatch, "/sensors/1", strings.NewReader(AsJSON(i)))
 	r.ServeHTTP(w, req)
 	assert.Equal(t, 200, w.Code)
 }
@@ -135,37 +137,40 @@ func TestPatchSensor(t *testing.T) {
 func TestPatchSensorAllFields(t *testing.T) {
 	r := SetupRouter()
 	w := httptest.NewRecorder()
-	i := "{\"mesh_id\":\"node357\",\"lower_bound\":7.6,\"upper_bound\":7.6,\"gradient_bound\":7.6}"
-	req, _ := http.NewRequest(http.MethodPatch, "/sensors/1", strings.NewReader(i))
+	i := map[string]interface{}{"mesh_id": "node357", "lower_bound": 7.6, "upper_bound": 7.6, "gradient_bound": 7.6}
+	req, _ := http.NewRequest(http.MethodPatch, "/sensors/1", strings.NewReader(AsJSON(i)))
 	r.ServeHTTP(w, req)
 	assert.Equal(t, 200, w.Code)
 
-	body, _ := ioutil.ReadAll(w.Body)
-	expected := "{\"id\":1,\"room_model_id\":1,\"latest_value\":0,\"mesh_id\":\"node357\",\"name\":\"Flow Sensor\"" +
-		",\"description\":\"A basic flow sensor.\",\"measurement_unit\":\"°C\",\"upper_bound\":7.6,\"lower_bound\"" +
-		":7.6,\"gradient_bound\":7.6}"
+	var m map[string]interface{}
+	_ = json.Unmarshal(w.Body.Bytes(), &m)
 
-	assert.Equal(t, expected, string(body))
+	assert.Equal(t, i["mesh_id"], m["mesh_id"])
+	assert.Equal(t, i["lower_bound"], m["lower_bound"])
+	assert.Equal(t, i["upper_bound"], m["upper_bound"])
+	assert.Equal(t, i["gradient_bound"], m["gradient_bound"])
+
+	w = httptest.NewRecorder()
 
 	// change data back
-	i = "{\"mesh_id\":\"node358\",\"lower_bound\":null,\"upper_bound\":null,\"gradient_bound\":null}"
-	req, _ = http.NewRequest(http.MethodPatch, "/sensors/1", strings.NewReader(i))
+	i = map[string]interface{}{"mesh_id": "358", "lower_bound": nil, "upper_bound": nil, "gradient_bound": nil}
+	req, _ = http.NewRequest(http.MethodPatch, "/sensors/1", strings.NewReader(AsJSON(i)))
 	r.ServeHTTP(w, req)
 	assert.Equal(t, 200, w.Code)
+	fmt.Println(w.Body.String())
+	_ = json.Unmarshal(w.Body.Bytes(), &m)
 
-	body, _ = ioutil.ReadAll(w.Body)
-	expected = "{\"id\":1,\"room_model_id\":1,\"latest_value\":0,\"mesh_id\":\"node358\",\"name\":\"Flow Sensor\"" +
-		",\"description\":\"A basic flow sensor.\",\"measurement_unit\":\"°C\",\"upper_bound\":null,\"lower_bound\"" +
-		":null,\"gradient_bound\":null}"
-
-	assert.Equal(t, expected, string(body))
+	assert.Equal(t, i["mesh_id"], m["mesh_id"])
+	assert.Equal(t, i["lower_bound"], m["lower_bound"])
+	assert.Equal(t, i["upper_bound"], m["upper_bound"])
+	assert.Equal(t, i["gradient_bound"], m["gradient_bound"])
 }
 
 func TestPatchSensorIDNotFound(t *testing.T) {
 	r := SetupRouter()
 	w := httptest.NewRecorder()
-	i := "{\"mesh_id\":\"node357\",\"lower_bound\":7.6,\"upper_bound\":7.6,\"gradient_bound\":7.6}"
-	req, _ := http.NewRequest(http.MethodPatch, "/sensors/13", strings.NewReader(i))
+	i := map[string]interface{}{"mesh_id": "node357", "lower_bound": 7.6, "upper_bound": 7.6, "gradient_bound": 7.6}
+	req, _ := http.NewRequest(http.MethodPatch, "/sensors/13", strings.NewReader(AsJSON(i)))
 	r.ServeHTTP(w, req)
 	assert.Equal(t, 404, w.Code)
 }
@@ -173,8 +178,8 @@ func TestPatchSensorIDNotFound(t *testing.T) {
 func TestPatchSensorIDMalformed(t *testing.T) {
 	r := SetupRouter()
 	w := httptest.NewRecorder()
-	i := "{\"mesh_id\":\"node357\",\"lower_bound\":7.6,\"upper_bound\":7.6,\"gradient_bound\":7.6}"
-	req, _ := http.NewRequest(http.MethodPatch, "/sensors/malformed", strings.NewReader(i))
+	i := map[string]interface{}{"mesh_id": "node357", "lower_bound": 7.6, "upper_bound": 7.6, "gradient_bound": 7.6}
+	req, _ := http.NewRequest(http.MethodPatch, "/sensors/malformed", strings.NewReader(AsJSON(i)))
 	r.ServeHTTP(w, req)
 	assert.Equal(t, 404, w.Code)
 }
@@ -182,33 +187,31 @@ func TestPatchSensorIDMalformed(t *testing.T) {
 func TestPatchSensorIgnoreInaccessibleFields(t *testing.T) {
 	r := SetupRouter()
 	w := httptest.NewRecorder()
-	i := "{\"name\":\"name\", \"description\":\"description\"}"
-	req, _ := http.NewRequest(http.MethodPatch, "/sensors/1", strings.NewReader(i))
+	i := map[string]interface{}{"name": "name", "description": "description"}
+	req, _ := http.NewRequest(http.MethodPatch, "/sensors/1", strings.NewReader(AsJSON(i)))
 	r.ServeHTTP(w, req)
 	assert.Equal(t, 200, w.Code)
 
-	body, _ := ioutil.ReadAll(w.Body)
-	expected := "{\"id\":1,\"room_model_id\":1,\"latest_value\":0,\"mesh_id\":\"node358\",\"name\":\"Flow Sensor\"," +
-		"\"description\":\"A basic flow sensor.\",\"measurement_unit\":\"°C\",\"upper_bound\":null," +
-		"\"lower_bound\":null,\"gradient_bound\":null}"
+	var m map[string]interface{}
+	_ = json.Unmarshal(w.Body.Bytes(), &m)
 
-	assert.Equal(t, expected, string(body))
+	assert.NotEqual(t, i["name"], m["name"])
+	assert.NotEqual(t, i["description"], m["description"])
 }
 
 func TestPatchSensorIgnoreNewField(t *testing.T) {
 	r := SetupRouter()
 	w := httptest.NewRecorder()
-	i := "{\"key\":\"value\"}"
-	req, _ := http.NewRequest(http.MethodPatch, "/sensors/1", strings.NewReader(i))
+	i := map[string]interface{}{"key": "value"}
+	req, _ := http.NewRequest(http.MethodPatch, "/sensors/1", strings.NewReader(AsJSON(i)))
 	r.ServeHTTP(w, req)
 	assert.Equal(t, 200, w.Code)
 
-	body, _ := ioutil.ReadAll(w.Body)
-	expected := "{\"id\":1,\"room_model_id\":1,\"latest_value\":0,\"mesh_id\":\"node358\",\"name\":\"Flow Sensor\"," +
-		"\"description\":\"A basic flow sensor.\",\"measurement_unit\":\"°C\",\"upper_bound\":null," +
-		"\"lower_bound\":null,\"gradient_bound\":null}"
+	var m map[string]interface{}
+	_ = json.Unmarshal(w.Body.Bytes(), &m)
 
-	assert.Equal(t, expected, string(body))
+	assert.NotEqual(t, i["key"], m["key"])
+	assert.Equal(t, nil, m["key"])
 }
 
 func TestPatchSensorWrongType(t *testing.T) {
@@ -223,16 +226,18 @@ func TestPatchSensorWrongType(t *testing.T) {
 func TestPatchSensorEmptyBody(t *testing.T) {
 	r := SetupRouter()
 	w := httptest.NewRecorder()
-	req, _ := http.NewRequest(http.MethodPatch, "/sensors/1", strings.NewReader("{}"))
+	req, _ := http.NewRequest(http.MethodGet, "/sensors/1", nil)
 	r.ServeHTTP(w, req)
 	assert.Equal(t, 200, w.Code)
 
-	body, _ := ioutil.ReadAll(w.Body)
-	expected := "{\"id\":1,\"room_model_id\":1,\"latest_value\":0,\"mesh_id\":\"node358\",\"name\":\"Flow Sensor\"," +
-		"\"description\":\"A basic flow sensor.\",\"measurement_unit\":\"°C\"," +
-		"\"upper_bound\":null,\"lower_bound\":null,\"gradient_bound\":null}"
+	resp := w.Body.String()
 
-	assert.Equal(t, expected, string(body))
+	w = httptest.NewRecorder()
+	req, _ = http.NewRequest(http.MethodPatch, "/sensors/1", strings.NewReader("{}"))
+	r.ServeHTTP(w, req)
+	assert.Equal(t, 200, w.Code)
+
+	assert.Equal(t, resp, w.Body.String())
 }
 
 func TestPatchSensorNilBody(t *testing.T) {
@@ -246,9 +251,10 @@ func TestPatchSensorNilBody(t *testing.T) {
 func TestQueryAnomaliesLowerBound(t *testing.T) {
 	r := SetupRouter()
 	w := httptest.NewRecorder()
-	i := "{\"lower_bound\":7.81}"
 
-	req, _ := http.NewRequest(http.MethodPatch, "/sensors/1", strings.NewReader(i))
+	i := map[string]interface{}{"lower_bound": 7.81}
+	req, _ := http.NewRequest(http.MethodPatch, "/sensors/1", strings.NewReader(AsJSON(i)))
+
 	r.ServeHTTP(w, req)
 	assert.Equal(t, 200, w.Code)
 
@@ -262,10 +268,10 @@ func TestQueryAnomaliesLowerBound(t *testing.T) {
 
 	assert.Equal(t, expected, w.Body.String())
 
-	i = "{\"lower_bound\":null}"
+	i = map[string]interface{}{"lower_bound": nil}
 
 	w = httptest.NewRecorder()
-	req, _ = http.NewRequest(http.MethodPatch, "/sensors/1", strings.NewReader(i))
+	req, _ = http.NewRequest(http.MethodPatch, "/sensors/1", strings.NewReader(AsJSON(i)))
 	r.ServeHTTP(w, req)
 	assert.Equal(t, 200, w.Code)
 }
@@ -273,9 +279,9 @@ func TestQueryAnomaliesLowerBound(t *testing.T) {
 func TestQueryAnomaliesUpperBound(t *testing.T) {
 	r := SetupRouter()
 	w := httptest.NewRecorder()
-	i := "{\"upper_bound\":7.85}"
+	i := map[string]interface{}{"upper_bound": 7.85}
 
-	req, _ := http.NewRequest(http.MethodPatch, "/sensors/1", strings.NewReader(i))
+	req, _ := http.NewRequest(http.MethodPatch, "/sensors/1", strings.NewReader(AsJSON(i)))
 	r.ServeHTTP(w, req)
 	assert.Equal(t, 200, w.Code)
 
@@ -289,10 +295,10 @@ func TestQueryAnomaliesUpperBound(t *testing.T) {
 
 	assert.Equal(t, expected, w.Body.String())
 
-	i = "{\"upper_bound\":null}"
+	i = map[string]interface{}{"upper_bound": nil}
 
 	w = httptest.NewRecorder()
-	req, _ = http.NewRequest(http.MethodPatch, "/sensors/1", strings.NewReader(i))
+	req, _ = http.NewRequest(http.MethodPatch, "/sensors/1", strings.NewReader(AsJSON(i)))
 	r.ServeHTTP(w, req)
 	assert.Equal(t, 200, w.Code)
 }
@@ -300,9 +306,9 @@ func TestQueryAnomaliesUpperBound(t *testing.T) {
 func TestQueryAnomaliesGradientBound(t *testing.T) {
 	r := SetupRouter()
 	w := httptest.NewRecorder()
-	i := "{\"gradient_bound\":0.0005}"
+	i := map[string]interface{}{"gradient_bound": 0.0005}
 
-	req, _ := http.NewRequest(http.MethodPatch, "/sensors/1", strings.NewReader(i))
+	req, _ := http.NewRequest(http.MethodPatch, "/sensors/1", strings.NewReader(AsJSON(i)))
 	r.ServeHTTP(w, req)
 	assert.Equal(t, 200, w.Code)
 
@@ -316,10 +322,10 @@ func TestQueryAnomaliesGradientBound(t *testing.T) {
 
 	assert.Equal(t, expected, w.Body.String())
 
-	i = "{\"gradient_bound\":null}"
+	i = map[string]interface{}{"gradient_bound": nil}
 
 	w = httptest.NewRecorder()
-	req, _ = http.NewRequest(http.MethodPatch, "/sensors/1", strings.NewReader(i))
+	req, _ = http.NewRequest(http.MethodPatch, "/sensors/1", strings.NewReader(AsJSON(i)))
 	r.ServeHTTP(w, req)
 	assert.Equal(t, 200, w.Code)
 }
@@ -327,9 +333,9 @@ func TestQueryAnomaliesGradientBound(t *testing.T) {
 func TestQueryAnomaliesCombined(t *testing.T) {
 	r := SetupRouter()
 	w := httptest.NewRecorder()
-	i := "{\"gradient_bound\":0.0001,\"upper_bound\":7.8}"
+	i := map[string]interface{}{"gradient_bound": 0.0001, "upper_bound": 7.8}
 
-	req, _ := http.NewRequest(http.MethodPatch, "/sensors/1", strings.NewReader(i))
+	req, _ := http.NewRequest(http.MethodPatch, "/sensors/1", strings.NewReader(AsJSON(i)))
 	r.ServeHTTP(w, req)
 	assert.Equal(t, 200, w.Code)
 
@@ -346,10 +352,10 @@ func TestQueryAnomaliesCombined(t *testing.T) {
 
 	assert.Equal(t, expected, w.Body.String())
 
-	i = "{\"gradient_bound\":null, \"upper_bound\":null}"
+	i = map[string]interface{}{"gradient_bound": nil, "upper_bound": nil}
 
 	w = httptest.NewRecorder()
-	req, _ = http.NewRequest(http.MethodPatch, "/sensors/1", strings.NewReader(i))
+	req, _ = http.NewRequest(http.MethodPatch, "/sensors/1", strings.NewReader(AsJSON(i)))
 	r.ServeHTTP(w, req)
 	assert.Equal(t, 200, w.Code)
 }
@@ -357,9 +363,9 @@ func TestQueryAnomaliesCombined(t *testing.T) {
 func TestQueryAnomaliesTimePeriod(t *testing.T) {
 	r := SetupRouter()
 	w := httptest.NewRecorder()
-	i := "{\"upper_bound\":7}"
+	i := map[string]interface{}{"upper_bound": 7}
 
-	req, _ := http.NewRequest(http.MethodPatch, "/sensors/1", strings.NewReader(i))
+	req, _ := http.NewRequest(http.MethodPatch, "/sensors/1", strings.NewReader(AsJSON(i)))
 	r.ServeHTTP(w, req)
 	assert.Equal(t, 200, w.Code)
 
@@ -372,10 +378,10 @@ func TestQueryAnomaliesTimePeriod(t *testing.T) {
 
 	assert.Equal(t, expected, w.Body.String())
 
-	i = "{\"upper_bound\":null}"
+	i = map[string]interface{}{"upper_bound": nil}
 
 	w = httptest.NewRecorder()
-	req, _ = http.NewRequest(http.MethodPatch, "/sensors/1", strings.NewReader(i))
+	req, _ = http.NewRequest(http.MethodPatch, "/sensors/1", strings.NewReader(AsJSON(i)))
 	r.ServeHTTP(w, req)
 	assert.Equal(t, 200, w.Code)
 }

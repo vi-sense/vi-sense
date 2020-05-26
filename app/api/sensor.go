@@ -57,6 +57,11 @@ const (
 func QuerySensors() (int, string) {
 	var r []Sensor
 	DB.Find(&r)
+
+	for i := range r {
+		r[i].LatestData = findLatestData(&r[i])
+	}
+
 	return http.StatusOK, AsJSON(&r)
 }
 
@@ -78,6 +83,7 @@ func QuerySensor(c *gin.Context) (int, string) {
 	if r.ID == 0 {
 		return http.StatusNotFound, AsJSON(gin.H{"error": fmt.Sprintf("Sensor %s not found.", id)})
 	}
+	r.LatestData = findLatestData(&r)
 	return http.StatusOK, AsJSON(&r)
 }
 
@@ -240,27 +246,7 @@ func fillQueryParams(c *gin.Context, m *map[string]interface{}) error {
 	return nil
 }
 
-func validateDateParam(s string) (string, error) {
-	if s == "" {
-		return "", nil
-	}
 
-	_, err := time.Parse(Layout, s)
-	if err == nil {
-		return s, nil
-	} else {
-		return "", err
-	}
-}
-
-func parseFloatParam(s string, def float64) (float64, error) {
-	if s == "" {
-		return def, nil
-	}
-
-	return strconv.ParseFloat(s, 64)
-
-}
 
 //Patch	Sensor godoc
 //@Summary Update sensor preferences
@@ -294,7 +280,31 @@ func PatchSensor(c *gin.Context) (int, string) {
 
 	DB.Model(&r).Update(i)
 
+	r.LatestData = findLatestData(&r)
+
 	return http.StatusOK, AsJSON(&r)
+}
+
+func validateDateParam(s string) (string, error) {
+	if s == "" {
+		return "", nil
+	}
+
+	_, err := time.Parse(Layout, s)
+	if err == nil {
+		return s, nil
+	} else {
+		return "", err
+	}
+}
+
+func parseFloatParam(s string, def float64) (float64, error) {
+	if s == "" {
+		return def, nil
+	}
+
+	return strconv.ParseFloat(s, 64)
+
 }
 
 func validateUpdateValues(m *map[string]interface{}) error {
@@ -325,4 +335,10 @@ func validateUpdateValues(m *map[string]interface{}) error {
 	}
 
 	return nil
+}
+
+func findLatestData(s *Sensor) Data {
+	var d Data
+	DB.Where("sensor_id = ?", s.ID).Order("date desc").First(&d)
+	return d
 }

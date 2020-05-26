@@ -6,6 +6,7 @@ import (
 	"io"
 	"math"
 	"os"
+	"sort"
 	"strconv"
 	"time"
 
@@ -30,7 +31,7 @@ type RoomModel struct {
 type Sensor struct {
 	ID              uint     `json:"id"`
 	RoomModelID     uint     `json:"room_model_id"`
-	LatestValue     float64  `json:"latest_value" gorm:"-"`
+	LatestData      Data     `json:"latest_data" gorm:"-"`
 	Data            []Data   `json:"-"`
 	MeshID          string   `json:"mesh_id"`
 	Name            string   `json:"name"`
@@ -241,6 +242,11 @@ func loadSampleData(path string, dataLimit int) []Data {
 
 		i++
 	}
+
+	sort.Slice(data, func(i, j int) bool {
+		return data[i].Date.Before(data[j].Date)
+	})
+
 	return data
 }
 
