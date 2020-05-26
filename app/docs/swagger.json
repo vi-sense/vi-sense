@@ -449,8 +449,9 @@
                 "id": {
                     "type": "integer"
                 },
-                "latest_value": {
-                    "type": "number"
+                "latest_data": {
+                    "type": "object",
+                    "$ref": "#/definitions/model.Data"
                 },
                 "lower_bound": {
                     "type": "number"

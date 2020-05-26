@@ -62,8 +62,9 @@ definitions:
         type: number
       id:
         type: integer
-      latest_value:
-        type: number
+      latest_data:
+        $ref: '#/definitions/model.Data'
+        type: object
       lower_bound:
         type: number
       measurement_unit:
