@@ -40,5 +40,10 @@ func QueryRoomModel(c *gin.Context) (int, string) {
 	if q.ID == 0 {
 		return http.StatusNotFound, AsJSON(gin.H{"error": fmt.Sprintf("Model %s not found.", id)})
 	}
+
+	for i, s := range q.Sensors {
+		q.Sensors[i].LatestData = findLatestData(&s)
+	}
+
 	return http.StatusOK, AsJSON(&q)
 }
