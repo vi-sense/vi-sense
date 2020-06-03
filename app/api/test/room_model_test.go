@@ -30,7 +30,7 @@ func TestQueryRoomModel(t *testing.T) {
 func TestQueryRoomModelIDNotFound(t *testing.T) {
 	r := SetupRouter()
 	w := httptest.NewRecorder()
-	req, _ := http.NewRequest(http.MethodGet, "/models/4", nil)
+	req, _ := http.NewRequest(http.MethodGet, "/models/5", nil)
 	r.ServeHTTP(w, req)
 
 	assert.Equal(t, 404, w.Code)

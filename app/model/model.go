@@ -51,7 +51,7 @@ type Data struct {
 	Date     time.Time `json:"date"`
 }
 
-// default mnemonic time
+//Layout default mnemonic time
 // https://pauladamsmith.com/blog/2011/05/go_time.html
 const Layout = "2006-01-02 15:04:05"
 
@@ -113,66 +113,127 @@ func CreateMockData(sampleDataPath string, dataLimit int) {
 		ImageUrl: "files/overhead-mep-installation/thumbnail.png",
 	}
 
-	models = append(models, m1, m2, m3)
-	meshIds := [][]string{
-		{"node358", "node422", "node441", "node505"},
-		{"node13", "node11", "node14", "node8"},
-		{"1883", "1887", "9673", "10147"},
+	m4 := &RoomModel{
+		Name: "PGN Model",
+		Description: "Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam" +
+			" nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua.",
+
+		Url:      "files/pgn-model/model.zip",
+		ImageUrl: "files/pgn-model/thumbnail.png",
 	}
 
-	fmt.Println("[i] loading sensor data")
+	models = append(models, m1, m2, m3, m4)
+	meshIds := [][]string{
+		{"vent1", "valve7", "valve8", "valve5", "tank1", "pump1", "pump2", "", ""}, // Facility Mechanical Room
+		{"node13", "node11", "node14", "node8", "", "", "", "", ""},                // MEP Building Model
+		{"1883", "1887", "9673", "10147", "", "", "", "", ""},                      // Overhead MEP Installation
+		{"30058", "29608", "29632", "29614", "29660", "5417", "5411", "", ""},      // PGN Model
+	}
+
+	fmt.Printf("[i] loading sensor data %s\n", time.Now().String())
 
 	for i, m := range models {
+		// this is a weird issue -> every time I try to clone the object the data gets overridden in the db
+		// so reading them several times is the only solution (idk why)
+		d := loadSampleData(fmt.Sprintf("%s/sensors/sensor_data.csv", sampleDataPath), dataLimit)
+
 		DB.Create(&m)
-		s1 := &Sensor{
-			RoomModelID:     m.ID,
-			Name:            "Flow Sensor",
-			Description:     "A basic flow sensor.",
+
+		s1 := Sensor{
+			RoomModelID: m.ID,
+			Name:        "Outdoor Temperature Sensor",
+			Description: "This Outdoor Temperature Sensor is a narrow-band, long range, low power" +
+				" consumption, high performance and high quality wireless sensor transmitting" +
+				" temperature from a NTC probe.",
 			MeshID:          meshIds[i][0],
 			MeasurementUnit: "°C",
-			Data: loadSampleData(
-				fmt.Sprintf("%s/sensors/sensor_004_vorlauf_deg-celcius.csv", sampleDataPath), dataLimit),
+			Data:            d[0],
 		}
 		DB.Create(&s1)
 
-		s2 := &Sensor{
+		s2 := Sensor{
 			RoomModelID: m.ID,
-			Name:        "Return Flow Sensor",
-			Description: "A basic return flow sensor with a longer description. Lorem ipsum dolor sit amet," +
-				" consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna" +
-				" aliquyam erat, sed diam voluptua.",
+			Name:        "Thermal Flow Sensor",
+			Description: "Inline Flow-Through Temperature Sensor monitors the temperature of a fluid" +
+				" that passes through it where a system control module receives this temperature" +
+				" reading and uses a control loop to control the overall system temperature.",
 
 			MeshID:          meshIds[i][1],
 			MeasurementUnit: "°C",
-			Data: loadSampleData(
-				fmt.Sprintf("%s/sensors/sensor_003_ruecklauf_deg-celcius.csv", sampleDataPath), dataLimit),
+			Data:            d[1],
 		}
 		DB.Create(&s2)
 
-		s3 := &Sensor{
-			RoomModelID:     m.ID,
-			Name:            "Fuel Sensor",
-			Description:     "A basic thermal sensor",
+		s3 := Sensor{
+			RoomModelID: m.ID,
+			Name:        "Thermal Return Flow Sensor",
+			Description: "Inline Return Flow Temperature Sensor monitors the temperature of a fluid" +
+				" that passes through it. The output values are related to the Thermal Flow Sensor.",
+
 			MeshID:          meshIds[i][2],
-			MeasurementUnit: "l",
-			Data: loadSampleData(
-				fmt.Sprintf("%s/sensors/sensor_002_fuel_litres.csv", sampleDataPath), dataLimit),
+			MeasurementUnit: "°C",
+			Data:            d[2],
 		}
 		DB.Create(&s3)
 
-		s4 := &Sensor{
-			RoomModelID:     m.ID,
-			Name:            "Pressure Sensor",
-			Description:     "A basic thermal sensor",
+		s4 := Sensor{
+			RoomModelID: m.ID,
+			Name:        "Room Temperature Sensor",
+			Description: "Calibratable room temperature measuring transducer with Modbus connection," +
+				" in an impact-resistant plastic housing.",
 			MeshID:          meshIds[i][3],
-			MeasurementUnit: "bar",
-			Data: loadSampleData(
-				fmt.Sprintf("%s/sensors/sensor_001_pressure_bar.csv", sampleDataPath), dataLimit),
+			MeasurementUnit: "°C",
+			Data:            d[3],
 		}
 		DB.Create(&s4)
+
+		s5 := Sensor{
+			RoomModelID: m.ID,
+			Name:        "Heating Room Temperature Sensor",
+			Description: "Calibratable room temperature measuring transducer with Modbus connection," +
+				" in an impact-resistant plastic housing. Designed for higher temperatures.",
+			MeshID:          meshIds[i][4],
+			MeasurementUnit: "°C",
+			Data:            d[4],
+		}
+		DB.Create(&s5)
+
+		s6 := Sensor{
+			RoomModelID:     m.ID,
+			Name:            "Pressure Sensor",
+			Description:     "Pressure Sensor for water pipe pressure measurement at water distribution utilities.",
+			MeshID:          meshIds[i][5],
+			MeasurementUnit: "bar",
+			Data:            d[5],
+		}
+		DB.Create(&s6)
+
+		s7 := Sensor{
+			RoomModelID: m.ID,
+			Name:        "Tap Water Temperature Sensor Heating Room",
+			Description: "This Tap Water Temperature Sensor is a probe that measures water temperature from" +
+				" -40° to +70°C. It consists of a thermistor encased in a sheath made from grade 316L" +
+				" stainless steel.",
+			MeshID:          meshIds[i][6],
+			MeasurementUnit: "°C",
+			Data:            d[6],
+		}
+		DB.Create(&s7)
+
+		s8 := Sensor{
+			RoomModelID: m.ID,
+			Name:        "Tap Water Temperature Sensor Inflow",
+			Description: "This Tap Water Temperature Sensor is a probe that measures water temperature from" +
+				" -40° to +70°C. It consists of a thermistor encased in a sheath made from grade 316L" +
+				" stainless steel.",
+			MeshID:          meshIds[i][7],
+			MeasurementUnit: "°C",
+			Data:            d[7],
+		}
+		DB.Create(&s8)
 	}
 
-	fmt.Println("[✓] finished loading sensor data")
+	fmt.Printf("[✓] finished loading sensor data %s\n", time.Now().String())
 }
 
 //SetupTestDatabase creates local sqlite db for testing
@@ -196,22 +257,23 @@ func DeleteTestDatabase() {
 	}
 }
 
-func loadSampleData(path string, dataLimit int) []Data {
+func loadSampleData(path string, dataLimit int) [][]Data {
 	csvFile, err := os.Open(path)
 	if err != nil {
 		fmt.Println("[!] Error ", err)
 	}
 	reader := csv.NewReader(bufio.NewReader(csvFile))
-	var data []Data
+	data := make([][]Data, 8)
 
 	i := 0
 
 	for {
-		if i == dataLimit {
+		if dataLimit != -1 && i == dataLimit + 1 {
 			break
 		}
 
 		line, err := reader.Read()
+
 		if err == io.EOF {
 			break
 		} else if err != nil {
@@ -219,33 +281,55 @@ func loadSampleData(path string, dataLimit int) []Data {
 			panic("[!] Error loading sample data")
 		}
 
-		if len(line) < 3 {
+		if len(line) != 9 {
 			fmt.Println("[!] Line skipped because there is not enough data prepared.", err)
 			fmt.Printf("[!] Line: %s", line)
 			continue
 		}
 
-		s := fmt.Sprintf("%s %s", line[0], line[1])
-		t, _ := time.Parse(Layout, s)
-		v, _ := strconv.ParseFloat(line[2], 64)
-		d := Data{
-			Date:     t,
-			Value:    v,
-			Gradient: 0.0,
+		if i == 0 {
+			i++
+			continue
 		}
 
-		if len(data) > 0 {
-			d.Gradient, _, _ = calculateGradient(data[len(data)-1], d)
+		t, err := strconv.ParseInt(line[0], 10, 64)
+		if err != nil {
+			fmt.Println(err)
+			panic("[!] Error parsing date")
 		}
 
-		data = append(data, d)
+		dt := time.Unix(t, 0).UTC()
+
+		for j := 0; j < len(data); j++ {
+			v, err := strconv.ParseFloat(line[j+1], 64)
+			if err != nil {
+				fmt.Println(err)
+				panic("[!] Error parsing value")
+			}
+
+			d := Data{
+				Date:     dt,
+				Value:    v,
+				Gradient: 0.0,
+			}
+
+			if len(data[j]) > 0 {
+				d.Gradient, _, _ = calculateGradient(data[j][len(data[j])-1], d)
+			} else {
+				data[j] = make([]Data, 0)
+			}
+
+			data[j] = append(data[j], d)
+		}
 
 		i++
 	}
 
-	sort.Slice(data, func(i, j int) bool {
-		return data[i].Date.Before(data[j].Date)
-	})
+	for _, d := range data {
+		sort.Slice(d, func(i, j int) bool {
+			return d[i].Date.Before(d[j].Date)
+		})
+	}
 
 	return data
 }

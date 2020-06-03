@@ -6,14 +6,15 @@ import (
 	. "github.com/vi-sense/vi-sense/app/model"
 	"math"
 	"net/http"
+	"sort"
 	"strconv"
 	"time"
 )
 
 type UpdateSensor struct {
-	MeshId string `json:"mesh_id"`
-	LowerBound float64 `json:"lower_bound"`
-	UpperBound float64 `json:"upper_bound"`
+	MeshId        string  `json:"mesh_id"`
+	LowerBound    float64 `json:"lower_bound"`
+	UpperBound    float64 `json:"upper_bound"`
 	GradientBound float64 `json:"gradient_bound"`
 }
 
@@ -93,6 +94,7 @@ func QuerySensor(c *gin.Context) (int, string) {
 //@Tags sensors
 //@Produce json
 //@Param id path int true "Sensor ID"
+//@Param limit query int false "Data Limit"
 //@Param start_date query string false "Start Date"
 //@Param end_date query string false "End Date"
 //@Success 200 {array} model.Data
@@ -106,6 +108,7 @@ func QuerySensorData(c *gin.Context) (int, string) {
 	queryParams := map[string]interface{}{
 		"start_date": "",
 		"end_date":   "",
+		"limit":      int64(1000),
 	}
 
 	// check if sensor exists
@@ -120,20 +123,28 @@ func QuerySensorData(c *gin.Context) (int, string) {
 		return http.StatusBadRequest, AsJSON(gin.H{"error": err.Error()})
 	}
 
+	fmt.Println(queryParams["limit"])
+
 	// query sensor data within defined time period
 	r := make([]Data, 0)
 
 	q := DB.Where("sensor_id = ?", id)
 
-	if queryParams["start_date"] != "" {
-		q = q.Where("date >= ?", queryParams["start_date"])
+	if queryParams["start_date"] != "" && queryParams["end_date"] == "" {
+		q = q.Where("date >= ?", queryParams["start_date"]).Limit(queryParams["limit"]).Find(&r)
+	} else if queryParams["start_date"] == "" && queryParams["end_date"] != "" {
+		q = q.Where("date <= ?", queryParams["end_date"]).
+			Order("date desc").Limit(queryParams["limit"]).Find(&r)
+	} else if queryParams["start_date"] != "" && queryParams["end_date"] != "" {
+		q = q.Where("date >= ?", queryParams["start_date"]).
+			Where("date <= ?", queryParams["end_date"]).Find(&r)
+	} else {
+		q = q.Order("date desc").Limit(queryParams["limit"]).Find(&r)
 	}
 
-	if queryParams["end_date"] != "" {
-		q = q.Where("date <= ?", queryParams["end_date"])
-	}
-
-	q.Find(&r)
+	sort.Slice(r, func(i, j int) bool {
+		return r[i].Date.Before(r[j].Date)
+	})
 
 	return http.StatusOK, AsJSON(r)
 }
@@ -183,10 +194,6 @@ func QueryAnomalies(c *gin.Context) (int, string) {
 
 	var r []Data
 	q.Find(&r)
-
-	if len(r) == 0 {
-		return http.StatusNotFound, AsJSON(gin.H{"error": fmt.Sprintf("Data for Sensor %s not found.", id)})
-	}
 
 	a := make([]Anomaly, 0)
 
@@ -240,13 +247,16 @@ func fillQueryParams(c *gin.Context, m *map[string]interface{}) error {
 			if err != nil {
 				return &ParamParseError{Param: k, Value: p}
 			}
+		case int64:
+			(*m)[k], err = parseIntParam(p, tv)
+			if err != nil {
+				return &ParamParseError{Param: k, Value: p}
+			}
 		}
 	}
 
 	return nil
 }
-
-
 
 //Patch	Sensor godoc
 //@Summary Update sensor preferences
@@ -304,7 +314,14 @@ func parseFloatParam(s string, def float64) (float64, error) {
 	}
 
 	return strconv.ParseFloat(s, 64)
+}
 
+func parseIntParam(s string, def int64) (int64, error) {
+	if s == "" {
+		return def, nil
+	}
+
+	return strconv.ParseInt(s, 10, 64)
 }
 
 func validateUpdateValues(m *map[string]interface{}) error {

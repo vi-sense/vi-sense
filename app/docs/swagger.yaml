@@ -279,6 +279,10 @@ paths:
         name: id
         required: true
         type: integer
+      - description: Data Limit
+        in: query
+        name: limit
+        type: integer
       - description: Start Date
         in: query
         name: start_date

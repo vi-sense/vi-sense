@@ -309,6 +309,12 @@
                         "required": true
                     },
                     {
+                        "type": "integer",
+                        "description": "Data Limit",
+                        "name": "limit",
+                        "in": "query"
+                    },
+                    {
                         "type": "string",
                         "description": "Start Date",
                         "name": "start_date",

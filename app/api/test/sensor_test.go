@@ -30,18 +30,17 @@ func TestQuerySensor(t *testing.T) {
 
 	assert.Equal(t, 200, w.Code)
 
-	expected := "{\"id\":1,\"room_model_id\":1,\"latest_data\":{\"id\":3,\"sensor_id\":1,\"value\":7.8," +
-		"\"gradient\":-0.00093,\"date\":\"2020-01-01T00:02:00Z\"},\"mesh_id\":\"node358\",\"name\":\"Flow Sensor\"," +
-		"\"description\":\"A basic flow sensor.\",\"measurement_unit\":\"°C\",\"upper_bound\":null," +
-		"\"lower_bound\":null,\"gradient_bound\":null}"
+	var m map[string]interface{}
+	_ = json.Unmarshal(w.Body.Bytes(), &m)
 
-	assert.Equal(t, expected, w.Body.String())
+	assert.Equal(t, 1.0, m["id"])
+	assert.Equal(t, 1.0, m["room_model_id"])
 }
 
 func TestQuerySensorIDNotFound(t *testing.T) {
 	r := SetupRouter()
 	w := httptest.NewRecorder()
-	req, _ := http.NewRequest(http.MethodGet, "/sensors/13", nil)
+	req, _ := http.NewRequest(http.MethodGet, "/sensors/1000", nil)
 	r.ServeHTTP(w, req)
 
 	assert.Equal(t, 404, w.Code)
@@ -64,42 +63,43 @@ func TestQuerySensorData(t *testing.T) {
 
 	assert.Equal(t, 200, w.Code)
 
-	expected := "[{\"id\":1,\"sensor_id\":1,\"value\":7.836,\"gradient\":0,\"date\":\"2020-01-01T00:00:00Z\"}," +
-		"{\"id\":2,\"sensor_id\":1,\"value\":7.856,\"gradient\":0.00033,\"date\":\"2020-01-01T00:01:00Z\"}," +
-		"{\"id\":3,\"sensor_id\":1,\"value\":7.8,\"gradient\":-0.00093,\"date\":\"2020-01-01T00:02:00Z\"}]"
+	var a []interface{}
+	_ = json.Unmarshal(w.Body.Bytes(), &a)
 
-	assert.Equal(t, expected, w.Body.String())
+	assert.Equal(t, 3, len(a))
 }
 
 func TestQuerySensorDataStartDate(t *testing.T) {
 	r := SetupRouter()
 	w := httptest.NewRecorder()
-	req, _ := http.NewRequest(http.MethodGet, "/sensors/1/data?start_date=2020-01-01 00:02:00", nil)
+	req, _ := http.NewRequest(http.MethodGet, "/sensors/1/data?start_date=2019-10-01 00:10:00", nil)
 	r.ServeHTTP(w, req)
 
 	assert.Equal(t, 200, w.Code)
 
-	expected := "[{\"id\":3,\"sensor_id\":1,\"value\":7.8,\"gradient\":-0.00093,\"date\":\"2020-01-01T00:02:00Z\"}]"
+	expected := "[{\"id\":3,\"sensor_id\":1,\"value\":11.910317,\"gradient\":" +
+		"-0.00018,\"date\":\"2019-10-01T00:10:07Z\"}]"
 	assert.Equal(t, expected, w.Body.String())
 }
 
 func TestQuerySensorDataStartAndEndDate(t *testing.T) {
 	r := SetupRouter()
 	w := httptest.NewRecorder()
-	req, _ := http.NewRequest(http.MethodGet, "/sensors/1/data?start_date=2020-01-01 00:01:00&"+
-		"end_date=2020-01-01 00:02:00", nil)
+	req, _ := http.NewRequest(http.MethodGet, "/sensors/1/data?start_date=2019-10-01 00:05:00&"+
+		"end_date=2019-10-01 00:10:00", nil)
 	r.ServeHTTP(w, req)
 
 	assert.Equal(t, 200, w.Code)
 
-	expected := "[{\"id\":2,\"sensor_id\":1,\"value\":7.856,\"gradient\":0.00033,\"date\":\"2020-01-01T00:01:00Z\"}]"
+	expected := "[{\"id\":2,\"sensor_id\":1,\"value\":11.965417,\"gradient\":" +
+		"-0.00018,\"date\":\"2019-10-01T00:05:02Z\"}]"
 	assert.Equal(t, expected, w.Body.String())
 }
 
 func TestQuerySensorDataIDNotFound(t *testing.T) {
 	r := SetupRouter()
 	w := httptest.NewRecorder()
-	req, _ := http.NewRequest(http.MethodGet, "/sensors/13/data", nil)
+	req, _ := http.NewRequest(http.MethodGet, "/sensors/1000/data", nil)
 	r.ServeHTTP(w, req)
 
 	assert.Equal(t, 404, w.Code)
@@ -170,7 +170,7 @@ func TestPatchSensorIDNotFound(t *testing.T) {
 	r := SetupRouter()
 	w := httptest.NewRecorder()
 	i := map[string]interface{}{"mesh_id": "node357", "lower_bound": 7.6, "upper_bound": 7.6, "gradient_bound": 7.6}
-	req, _ := http.NewRequest(http.MethodPatch, "/sensors/13", strings.NewReader(AsJSON(i)))
+	req, _ := http.NewRequest(http.MethodPatch, "/sensors/1000", strings.NewReader(AsJSON(i)))
 	r.ServeHTTP(w, req)
 	assert.Equal(t, 404, w.Code)
 }
@@ -252,7 +252,7 @@ func TestQueryAnomaliesLowerBound(t *testing.T) {
 	r := SetupRouter()
 	w := httptest.NewRecorder()
 
-	i := map[string]interface{}{"lower_bound": 7.81}
+	i := map[string]interface{}{"lower_bound": 11.95}
 	req, _ := http.NewRequest(http.MethodPatch, "/sensors/1", strings.NewReader(AsJSON(i)))
 
 	r.ServeHTTP(w, req)
@@ -263,8 +263,8 @@ func TestQueryAnomaliesLowerBound(t *testing.T) {
 	r.ServeHTTP(w, req)
 	assert.Equal(t, 200, w.Code)
 
-	expected := "[{\"types\":[\"Below Lower Limit\"],\"date\":\"2020-01-01T00:02:00Z\"," +
-		"\"value\":7.8,\"gradient\":-0.00093}]"
+	expected := "[{\"types\":[\"Below Lower Limit\"],\"date\":\"2019-10-01T00:10:07Z\",\"value\":" +
+		"11.910317,\"gradient\":-0.00018}]"
 
 	assert.Equal(t, expected, w.Body.String())
 
@@ -279,7 +279,7 @@ func TestQueryAnomaliesLowerBound(t *testing.T) {
 func TestQueryAnomaliesUpperBound(t *testing.T) {
 	r := SetupRouter()
 	w := httptest.NewRecorder()
-	i := map[string]interface{}{"upper_bound": 7.85}
+	i := map[string]interface{}{"upper_bound": 12}
 
 	req, _ := http.NewRequest(http.MethodPatch, "/sensors/1", strings.NewReader(AsJSON(i)))
 	r.ServeHTTP(w, req)
@@ -290,8 +290,7 @@ func TestQueryAnomaliesUpperBound(t *testing.T) {
 	r.ServeHTTP(w, req)
 	assert.Equal(t, 200, w.Code)
 
-	expected := "[{\"types\":[\"Above Upper Limit\"],\"date\":\"2020-01-01T00:01:00Z\"," +
-		"\"value\":7.856,\"gradient\":0.00033}]"
+	expected := "[{\"types\":[\"Above Upper Limit\"],\"date\":\"2019-10-01T00:00:00Z\",\"value\":12.02,\"gradient\":0}]"
 
 	assert.Equal(t, expected, w.Body.String())
 
@@ -306,7 +305,7 @@ func TestQueryAnomaliesUpperBound(t *testing.T) {
 func TestQueryAnomaliesGradientBound(t *testing.T) {
 	r := SetupRouter()
 	w := httptest.NewRecorder()
-	i := map[string]interface{}{"gradient_bound": 0.0005}
+	i := map[string]interface{}{"gradient_bound": 0.0001}
 
 	req, _ := http.NewRequest(http.MethodPatch, "/sensors/1", strings.NewReader(AsJSON(i)))
 	r.ServeHTTP(w, req)
@@ -317,8 +316,9 @@ func TestQueryAnomaliesGradientBound(t *testing.T) {
 	r.ServeHTTP(w, req)
 	assert.Equal(t, 200, w.Code)
 
-	expected := "[{\"types\":[\"High Downward Gradient\"],\"date\":\"2020-01-01T00:02:00Z\"," +
-		"\"value\":7.8,\"gradient\":-0.00093}]"
+	expected := "[{\"types\":[\"High Downward Gradient\"],\"date\":\"2019-10-01T00:05:02Z\",\"value\":" +
+		"11.965417,\"gradient\":-0.00018},{\"types\":[\"High Downward Gradient\"]," +
+		"\"date\":\"2019-10-01T00:10:07Z\",\"value\":11.910317,\"gradient\":-0.00018}]"
 
 	assert.Equal(t, expected, w.Body.String())
 
@@ -333,7 +333,7 @@ func TestQueryAnomaliesGradientBound(t *testing.T) {
 func TestQueryAnomaliesCombined(t *testing.T) {
 	r := SetupRouter()
 	w := httptest.NewRecorder()
-	i := map[string]interface{}{"gradient_bound": 0.0001, "upper_bound": 7.8}
+	i := map[string]interface{}{"gradient_bound": 0.0001, "upper_bound": 11.96}
 
 	req, _ := http.NewRequest(http.MethodPatch, "/sensors/1", strings.NewReader(AsJSON(i)))
 	r.ServeHTTP(w, req)
@@ -344,11 +344,11 @@ func TestQueryAnomaliesCombined(t *testing.T) {
 	r.ServeHTTP(w, req)
 	assert.Equal(t, 200, w.Code)
 
-	expected := "[{\"types\":[\"Above Upper Limit\"],\"date\":\"2020-01-01T00:00:00Z\",\"value\":7.836," +
-		"\"gradient\":0},{\"types\":[\"Above Upper Limit\",\"High Upward Gradient\"]," +
-		"\"date\":\"2020-01-01T00:01:00Z\",\"value\":7.856,\"gradient\":0.00033}," +
-		"{\"types\":[\"High Downward Gradient\"],\"date\":\"2020-01-01T00:02:00Z\"," +
-		"\"value\":7.8,\"gradient\":-0.00093}]"
+	expected := "[{\"types\":[\"Above Upper Limit\"],\"date\":\"2019-10-01T00:00:00Z\",\"value\":12.02," +
+		"\"gradient\":0},{\"types\":[\"Above Upper Limit\",\"High Downward Gradient\"]," +
+		"\"date\":\"2019-10-01T00:05:02Z\",\"value\":11.965417,\"gradient\":-0.00018}," +
+		"{\"types\":[\"High Downward Gradient\"],\"date\":\"2019-10-01T00:10:07Z\",\"value\":11.910317," +
+		"\"gradient\":-0.00018}]"
 
 	assert.Equal(t, expected, w.Body.String())
 
@@ -370,11 +370,12 @@ func TestQueryAnomaliesTimePeriod(t *testing.T) {
 	assert.Equal(t, 200, w.Code)
 
 	w = httptest.NewRecorder()
-	req, _ = http.NewRequest(http.MethodGet, "/sensors/1/anomalies?start_date=2020-01-01 00:01:00&end_date=2020-01-01 00:02:00", nil)
+	req, _ = http.NewRequest(http.MethodGet, "/sensors/1/anomalies?start_date=2019-10-01 00:05:00&end_date=2019-10-01 00:10:00", nil)
 	r.ServeHTTP(w, req)
 	assert.Equal(t, 200, w.Code)
 
-	expected := "[{\"types\":[\"Above Upper Limit\"],\"date\":\"2020-01-01T00:01:00Z\",\"value\":7.856,\"gradient\":0.00033}]"
+	expected := "[{\"types\":[\"Above Upper Limit\"],\"date\":\"2019-10-01T00:05:02Z\"," +
+		"\"value\":11.965417,\"gradient\":-0.00018}]"
 
 	assert.Equal(t, expected, w.Body.String())
 
