@@ -11,7 +11,7 @@ import (
 
 func main() {
 	SetupDatabase(true)
-	CreateMockData("/sample-data", -1)
+	CreateMockData("/sample-data", 5000)
 
 	//check if bind mount is working
 	dat, err := ioutil.ReadFile("/sample-data/info.txt")

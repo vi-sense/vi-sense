@@ -132,10 +132,16 @@ func CreateMockData(sampleDataPath string, dataLimit int) {
 
 	fmt.Printf("[i] loading sensor data %s\n", time.Now().String())
 
+	sampleData := loadSampleData(fmt.Sprintf("%s/sensors/sensor_data.csv", sampleDataPath), dataLimit)
+
 	for i, m := range models {
-		// this is a weird issue -> every time I try to clone the object the data gets overridden in the db
-		// so reading them several times is the only solution (idk why)
-		d := loadSampleData(fmt.Sprintf("%s/sensors/sensor_data.csv", sampleDataPath), dataLimit)
+
+		// deep copy sample data
+		d := make([][]Data, len(sampleData))
+		for i := range sampleData {
+			d[i] = make([]Data, len(sampleData[i]))
+			copy(d[i], sampleData[i])
+		}
 
 		DB.Create(&m)
 
