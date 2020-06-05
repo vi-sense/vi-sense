@@ -12,20 +12,28 @@ The aim of vi-sense is to develop a solution for visualizing IoT sensors and the
 
 ## Local development
 
-- git large file storage is needed to install this repository
+git large file storage is needed to install this repository
+
 ```git lfs install```
 
-- clone the visense-frontend repo
+clone the visense-frontend repo
+
 ```git lfs clone --recurse-submodules git@github.com:vi-sense/vi-sense.git```
 
-- alternatively
+alternatively
+
 ```git clone --recurse-submodules git@github.com:vi-sense/vi-sense.git```
+
 ```cd sample-data/```
+
 ```git lfs pull```
 
-- or update repo
+or update repo
+
 ```git submodule update --init --recursive```
+
 ```cd sample-data/```
+
 ```git lfs pull```
 
 ### Running
@@ -37,5 +45,5 @@ starts the app in integration mode, using the visense image from docker hub, fro
 
 ## Generate API documentation
 
-cd into app/
+```cd into app/```
 ```swag init -g api/api.go```
