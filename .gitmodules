@@ -1,3 +1,5 @@
 [submodule "sample-data"]
 	path = sample-data
 	url = git@github.com:vi-sense/sample-data.git
+[submodule "sample-data/"]
+	branch = master
