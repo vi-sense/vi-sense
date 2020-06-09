@@ -32,7 +32,7 @@ func (e *ParamParseError) Error() string {
 
 type Anomaly struct {
 	Types    []AnomalyType `json:"types"`
-	Date     time.Time     `json:"date"`
+	Date     Date          `json:"date"`
 	Value    float64       `json:"value"`
 	Gradient float64       `json:"gradient"`
 }
@@ -143,7 +143,7 @@ func QuerySensorData(c *gin.Context) (int, string) {
 	}
 
 	sort.Slice(r, func(i, j int) bool {
-		return r[i].Date.Before(r[j].Date)
+		return r[i].Date.Time.Before(r[j].Date.Time)
 	})
 
 	return http.StatusOK, AsJSON(r)
