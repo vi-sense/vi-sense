@@ -3,15 +3,12 @@ package model
 import (
 	"bufio"
 	"fmt"
-	"io"
 	"math"
 	"os"
-	"sort"
 	"strconv"
 	"time"
 
-	"encoding/csv"
-
+	"github.com/gocarina/gocsv"
 	"github.com/jinzhu/gorm"
 	_ "github.com/jinzhu/gorm/dialects/postgres"
 	_ "github.com/jinzhu/gorm/dialects/sqlite"
@@ -44,11 +41,22 @@ type Sensor struct {
 
 //Data specifies the structure for a single measured value w/ timestamp which was recorded by a sensor
 type Data struct {
-	ID       uint      `json:"id"`
-	SensorID uint      `json:"sensor_id"`
-	Value    float64   `json:"value"`
-	Gradient float64   `json:"gradient"`
-	Date     time.Time `json:"date"`
+	ID       uint      `json:"id" csv:"-"`
+	SensorID uint      `json:"sensor_id" csv:"-"`
+	Value    float64   `json:"value" csv:"value"`
+	Gradient float64   `json:"gradient" csv:"-"`
+	Date     Date      `json:"date" csv:"date" gorm:"embedded"`
+}
+
+type Date struct {
+	time.Time `gorm:"column:date"`
+}
+
+// Convert the CSV string as internal date
+func (date *Date) UnmarshalCSV(csv string) (err error) {
+	t, err := strconv.ParseInt(csv, 10, 64)
+	date.Time = time.Unix(t, 0).UTC()
+	return err
 }
 
 //Layout default mnemonic time
@@ -132,10 +140,18 @@ func CreateMockData(sampleDataPath string, dataLimit int) {
 
 	fmt.Printf("[i] loading sensor data %s\n", time.Now().String())
 
-	sampleData := loadSampleData(fmt.Sprintf("%s/sensors/sensor_data.csv", sampleDataPath), dataLimit)
+	sampleData := [8][]Data{
+		loadSampleData(fmt.Sprintf("%s/sensors/sample_model/outdoor_air_temperature.csv", sampleDataPath), dataLimit),
+		loadSampleData(fmt.Sprintf("%s/sensors/sample_model/flow.csv", sampleDataPath), dataLimit),
+		loadSampleData(fmt.Sprintf("%s/sensors/sample_model/return_flow.csv", sampleDataPath), dataLimit),
+		loadSampleData(fmt.Sprintf("%s/sensors/sample_model/room_temperature.csv", sampleDataPath), dataLimit),
+		loadSampleData(fmt.Sprintf("%s/sensors/sample_model/heating_target_temperature.csv", sampleDataPath), dataLimit),
+		loadSampleData(fmt.Sprintf("%s/sensors/sample_model/pressure.csv", sampleDataPath), dataLimit),
+		loadSampleData(fmt.Sprintf("%s/sensors/sample_model/tap_water_temperature_boiler_room.csv", sampleDataPath), dataLimit),
+		loadSampleData(fmt.Sprintf("%s/sensors/sample_model/tap_water_temperature_inflow.csv", sampleDataPath), dataLimit),
+	}
 
 	for i, m := range models {
-
 		// deep copy sample data
 		d := make([][]Data, len(sampleData))
 		for i := range sampleData {
@@ -263,84 +279,43 @@ func DeleteTestDatabase() {
 	}
 }
 
-func loadSampleData(path string, dataLimit int) [][]Data {
-	csvFile, err := os.Open(path)
+func loadSampleData(path string, dataLimit int) []Data {
+	file, err := os.Open(path)
 	if err != nil {
-		fmt.Println("[!] Error ", err)
+		fmt.Println("[!] Error loading file")
+		panic(err)
 	}
-	reader := csv.NewReader(bufio.NewReader(csvFile))
-	data := make([][]Data, 8)
+	defer file.Close()
+
+	data := make([]Data, 0)
+	scanner := bufio.NewScanner(file)
+	scanner.Scan()
+	headerText := scanner.Text()
 
 	i := 0
-
-	for {
-		if dataLimit != -1 && i == dataLimit + 1 {
+	for scanner.Scan() {
+		if i == dataLimit {
 			break
 		}
 
-		line, err := reader.Read()
-
-		if err == io.EOF {
-			break
-		} else if err != nil {
-			fmt.Println(err)
-			panic("[!] Error loading sample data")
+		var d []Data
+		combined := fmt.Sprintf("%s\n%s", headerText, scanner.Text())
+		if err := gocsv.UnmarshalString(combined, &d); err != nil {
+			panic(err)
 		}
+		data = append(data, d[0])
 
-		if len(line) != 9 {
-			fmt.Println("[!] Line skipped because there is not enough data prepared.", err)
-			fmt.Printf("[!] Line: %s", line)
-			continue
-		}
-
-		if i == 0 {
-			i++
-			continue
-		}
-
-		t, err := strconv.ParseInt(line[0], 10, 64)
-		if err != nil {
-			fmt.Println(err)
-			panic("[!] Error parsing date")
-		}
-
-		dt := time.Unix(t, 0).UTC()
-
-		for j := 0; j < len(data); j++ {
-			v, err := strconv.ParseFloat(line[j+1], 64)
-			if err != nil {
-				fmt.Println(err)
-				panic("[!] Error parsing value")
-			}
-
-			d := Data{
-				Date:     dt,
-				Value:    v,
-				Gradient: 0.0,
-			}
-
-			if len(data[j]) > 0 {
-				d.Gradient, _, _ = calculateGradient(data[j][len(data[j])-1], d)
-			} else {
-				data[j] = make([]Data, 0)
-			}
-
-			data[j] = append(data[j], d)
+		if i > 0 {
+			data[i].Gradient, _, _ = calculateGradient(&data[i-1], &data[i])
 		}
 
 		i++
 	}
 
-	for _, d := range data {
-		sort.Slice(d, func(i, j int) bool {
-			return d[i].Date.Before(d[j].Date)
-		})
-	}
-
 	return data
 }
 
-func calculateGradient(d1 Data, d2 Data) (float64, float64, int64) {
+func calculateGradient(d1 *Data, d2 *Data) (float64, float64, int64) {
 	d := d2.Value - d1.Value
 	dTime := d2.Date.Unix() - d1.Date.Unix()
 	grad := d / float64(dTime)
