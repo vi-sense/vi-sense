@@ -2,7 +2,9 @@ package model
 
 import (
 	"bufio"
+	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"math"
 	"os"
 	"strconv"
@@ -30,6 +32,7 @@ type Sensor struct {
 	RoomModelID     uint     `json:"room_model_id"`
 	LatestData      Data     `json:"latest_data" gorm:"-"`
 	Data            []Data   `json:"-"`
+	ImportName      string   `json:"import_name,omitempty" gorm:"-"`
 	MeshID          string   `json:"mesh_id"`
 	Name            string   `json:"name"`
 	Description     string   `json:"description"`
@@ -41,11 +44,11 @@ type Sensor struct {
 
 //Data specifies the structure for a single measured value w/ timestamp which was recorded by a sensor
 type Data struct {
-	ID       uint      `json:"id" csv:"-"`
-	SensorID uint      `json:"sensor_id" csv:"-"`
-	Value    float64   `json:"value" csv:"value"`
-	Gradient float64   `json:"gradient" csv:"-"`
-	Date     Date      `json:"date" csv:"date" gorm:"embedded"`
+	ID       uint    `json:"id" csv:"-"`
+	SensorID uint    `json:"sensor_id" csv:"-"`
+	Value    float64 `json:"value" csv:"value"`
+	Gradient float64 `json:"gradient" csv:"-"`
+	Date     Date    `json:"date" csv:"date" gorm:"embedded"`
 }
 
 type Date struct {
@@ -94,165 +97,23 @@ func SetupDatabase(drop bool) {
 	fmt.Println("[✓] schemes migrated")
 }
 
-func CreateMockData(sampleDataPath string, dataLimit int) {
-	var models []*RoomModel
-
-	m1 := &RoomModel{
-		Name:        "Facility Mechanical Room",
-		Description: "This model shows a facility mechanical room with lots of pipes and stuff.",
-		Url:         "files/facility-mechanical-room/model.zip",
-		ImageUrl:    "files/facility-mechanical-room/thumbnail.png",
-	}
-
-	m2 := &RoomModel{
-		Name:        "MEP Building Model",
-		Description: "This model shows a MEP building with two floors and pipes.",
-		Url:         "files/mep-building-model/model.zip",
-		ImageUrl:    "files/mep-building-model/thumbnail.png",
-	}
-
-	m3 := &RoomModel{
-		Name: "Overhead MEP Installation",
-		Description: "This model shows a overhead MEP installation. To make things look better this model" +
-			" has a longer description. Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam" +
-			" nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua.",
-
-		Url:      "files/overhead-mep-installation/model.zip",
-		ImageUrl: "files/overhead-mep-installation/thumbnail.png",
-	}
-
-	m4 := &RoomModel{
-		Name: "PGN Model",
-		Description: "Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam" +
-			" nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua.",
-
-		Url:      "files/pgn-model/model.zip",
-		ImageUrl: "files/pgn-model/thumbnail.png",
-	}
-
-	models = append(models, m1, m2, m3, m4)
-	meshIds := [][]string{
-		{"vent1", "valve7", "valve8", "valve5", "tank1", "pump1", "pump2", "", ""}, // Facility Mechanical Room
-		{"node13", "node11", "node14", "node8", "", "", "", "", ""},                // MEP Building Model
-		{"1883", "1887", "9673", "10147", "", "", "", "", ""},                      // Overhead MEP Installation
-		{"30058", "29608", "29632", "29614", "29660", "5417", "5411", "", ""},      // PGN Model
-	}
-
+func CreateMockData(sampleDataPath string, modelFolders []string, dataLimit int) {
 	fmt.Printf("[i] loading sensor data %s\n", time.Now().String())
 
-	sampleData := [8][]Data{
-		loadSampleData(fmt.Sprintf("%s/sensors/sample_model/outdoor_air_temperature.csv", sampleDataPath), dataLimit),
-		loadSampleData(fmt.Sprintf("%s/sensors/sample_model/flow.csv", sampleDataPath), dataLimit),
-		loadSampleData(fmt.Sprintf("%s/sensors/sample_model/return_flow.csv", sampleDataPath), dataLimit),
-		loadSampleData(fmt.Sprintf("%s/sensors/sample_model/room_temperature.csv", sampleDataPath), dataLimit),
-		loadSampleData(fmt.Sprintf("%s/sensors/sample_model/heating_target_temperature.csv", sampleDataPath), dataLimit),
-		loadSampleData(fmt.Sprintf("%s/sensors/sample_model/pressure.csv", sampleDataPath), dataLimit),
-		loadSampleData(fmt.Sprintf("%s/sensors/sample_model/tap_water_temperature_boiler_room.csv", sampleDataPath), dataLimit),
-		loadSampleData(fmt.Sprintf("%s/sensors/sample_model/tap_water_temperature_inflow.csv", sampleDataPath), dataLimit),
-	}
+	for i, folder := range modelFolders {
+		f, _ := ioutil.ReadFile(fmt.Sprintf("%s/sensors/%s/model.json", sampleDataPath, folder))
+		var m *RoomModel
 
-	for i, m := range models {
-		// deep copy sample data
-		d := make([][]Data, len(sampleData))
-		for i := range sampleData {
-			d[i] = make([]Data, len(sampleData[i]))
-			copy(d[i], sampleData[i])
+		if err := json.Unmarshal(f, &m); err != nil {
+			fmt.Println("error loading model: ", modelFolders[i])
+			panic(err)
 		}
 
+		for i := range m.Sensors {
+			m.Sensors[i].Data = loadSampleData(fmt.Sprintf("%s/sensors/%s/%s", sampleDataPath, folder, m.Sensors[i].ImportName), dataLimit)
+		}
 		DB.Create(&m)
-
-		s1 := Sensor{
-			RoomModelID: m.ID,
-			Name:        "Outdoor Temperature Sensor",
-			Description: "This Outdoor Temperature Sensor is a narrow-band, long range, low power" +
-				" consumption, high performance and high quality wireless sensor transmitting" +
-				" temperature from a NTC probe.",
-			MeshID:          meshIds[i][0],
-			MeasurementUnit: "°C",
-			Data:            d[0],
-		}
-		DB.Create(&s1)
-
-		s2 := Sensor{
-			RoomModelID: m.ID,
-			Name:        "Thermal Flow Sensor",
-			Description: "Inline Flow-Through Temperature Sensor monitors the temperature of a fluid" +
-				" that passes through it where a system control module receives this temperature" +
-				" reading and uses a control loop to control the overall system temperature.",
-
-			MeshID:          meshIds[i][1],
-			MeasurementUnit: "°C",
-			Data:            d[1],
-		}
-		DB.Create(&s2)
-
-		s3 := Sensor{
-			RoomModelID: m.ID,
-			Name:        "Thermal Return Flow Sensor",
-			Description: "Inline Return Flow Temperature Sensor monitors the temperature of a fluid" +
-				" that passes through it. The output values are related to the Thermal Flow Sensor.",
-
-			MeshID:          meshIds[i][2],
-			MeasurementUnit: "°C",
-			Data:            d[2],
-		}
-		DB.Create(&s3)
-
-		s4 := Sensor{
-			RoomModelID: m.ID,
-			Name:        "Room Temperature Sensor",
-			Description: "Calibratable room temperature measuring transducer with Modbus connection," +
-				" in an impact-resistant plastic housing.",
-			MeshID:          meshIds[i][3],
-			MeasurementUnit: "°C",
-			Data:            d[3],
-		}
-		DB.Create(&s4)
-
-		s5 := Sensor{
-			RoomModelID: m.ID,
-			Name:        "Heating Room Temperature Sensor",
-			Description: "Calibratable room temperature measuring transducer with Modbus connection," +
-				" in an impact-resistant plastic housing. Designed for higher temperatures.",
-			MeshID:          meshIds[i][4],
-			MeasurementUnit: "°C",
-			Data:            d[4],
-		}
-		DB.Create(&s5)
-
-		s6 := Sensor{
-			RoomModelID:     m.ID,
-			Name:            "Pressure Sensor",
-			Description:     "Pressure Sensor for water pipe pressure measurement at water distribution utilities.",
-			MeshID:          meshIds[i][5],
-			MeasurementUnit: "bar",
-			Data:            d[5],
-		}
-		DB.Create(&s6)
-
-		s7 := Sensor{
-			RoomModelID: m.ID,
-			Name:        "Tap Water Temperature Sensor Heating Room",
-			Description: "This Tap Water Temperature Sensor is a probe that measures water temperature from" +
-				" -40° to +70°C. It consists of a thermistor encased in a sheath made from grade 316L" +
-				" stainless steel.",
-			MeshID:          meshIds[i][6],
-			MeasurementUnit: "°C",
-			Data:            d[6],
-		}
-		DB.Create(&s7)
-
-		s8 := Sensor{
-			RoomModelID: m.ID,
-			Name:        "Tap Water Temperature Sensor Inflow",
-			Description: "This Tap Water Temperature Sensor is a probe that measures water temperature from" +
-				" -40° to +70°C. It consists of a thermistor encased in a sheath made from grade 316L" +
-				" stainless steel.",
-			MeshID:          meshIds[i][7],
-			MeasurementUnit: "°C",
-			Data:            d[7],
-		}
-		DB.Create(&s8)
+		fmt.Printf("[✓] model %s loaded %s\n", folder, time.Now().String())
 	}
 
 	fmt.Printf("[✓] finished loading sensor data %s\n", time.Now().String())
