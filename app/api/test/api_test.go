@@ -31,3 +31,35 @@ func TestPingRoute(t *testing.T) {
 	assert.Equal(t, 200, w.Code)
 	assert.Equal(t, "pong", w.Body.String())
 }
+
+// gorm allows parameterized queries w/ sql parameters
+// example DB.Where("name = ?", param).First(&u)
+func TestSqlInjection(t *testing.T) {
+	r := SetupRouter()
+
+	w := httptest.NewRecorder()
+	req, _ := http.NewRequest("GET", "/sensors/1/data?start_date=2019-01-01 00:00:00;DROP TABLE sensor", nil)
+	r.ServeHTTP(w, req)
+
+	assert.Equal(t, 200, w.Code)
+
+	var s Sensor
+	DB.First(&s)
+
+	assert.NotEqual(t, uint(0), s.ID)
+}
+
+func TestSqlInjection2(t *testing.T) {
+	r := SetupRouter()
+
+	w := httptest.NewRecorder()
+	req, _ := http.NewRequest("GET", "/sensors/1/anomalies?start_date=2019-01-01 00:00:00;DROP TABLE sensor", nil)
+	r.ServeHTTP(w, req)
+
+	assert.Equal(t, 200, w.Code)
+
+	var s Sensor
+	DB.First(&s)
+
+	assert.NotEqual(t, uint(0), s.ID)
+}
