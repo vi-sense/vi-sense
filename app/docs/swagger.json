@@ -8,7 +8,7 @@
         "title": "vi-sense BIM API",
         "contact": {},
         "license": {},
-        "version": "0.1.5"
+        "version": "0.1.6"
     },
     "host": "visense.f4.htw-berlin.de:44344",
     "basePath": "/",
@@ -364,7 +364,7 @@
             "type": "object",
             "properties": {
                 "date": {
-                    "type": "string"
+                    "type": "Date"
                 },
                 "gradient": {
                     "type": "number"
@@ -401,7 +401,8 @@
             "type": "object",
             "properties": {
                 "date": {
-                    "type": "string"
+                    "type": "object",
+                    "$ref": "#/definitions/model.Date"
                 },
                 "gradient": {
                     "type": "number"
@@ -416,6 +417,9 @@
                     "type": "number"
                 }
             }
+        },
+        "model.Date": {
+            "type": "object"
         },
         "model.RoomModel": {
             "type": "object",
@@ -454,6 +458,9 @@
                 },
                 "id": {
                     "type": "integer"
+                },
+                "import_name": {
+                    "type": "string"
                 },
                 "latest_data": {
                     "type": "object",

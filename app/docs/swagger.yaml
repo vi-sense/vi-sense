@@ -3,7 +3,7 @@ definitions:
   api.Anomaly:
     properties:
       date:
-        type: string
+        type: Date
       gradient:
         type: number
       types:
@@ -27,7 +27,8 @@ definitions:
   model.Data:
     properties:
       date:
-        type: string
+        $ref: '#/definitions/model.Date'
+        type: object
       gradient:
         type: number
       id:
@@ -36,6 +37,8 @@ definitions:
         type: integer
       value:
         type: number
+    type: object
+  model.Date:
     type: object
   model.RoomModel:
     properties:
@@ -62,6 +65,8 @@ definitions:
         type: number
       id:
         type: integer
+      import_name:
+        type: string
       latest_data:
         $ref: '#/definitions/model.Data'
         type: object
@@ -85,7 +90,7 @@ info:
     sensors and their data.
   license: {}
   title: vi-sense BIM API
-  version: 0.1.5
+  version: 0.1.6
 paths:
   /models:
     get:
