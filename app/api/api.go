@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
+	"github.com/s12i/gin-throttle"
 	swaggerFiles "github.com/swaggo/files"
 	ginSwagger "github.com/swaggo/gin-swagger"
 	"net/http"
@@ -21,7 +22,13 @@ import (
 
 //SetupRouter initializes all available routes / endpoints and the access to static files
 func SetupRouter() *gin.Engine {
+
 	r := gin.Default()
+
+	//to limit the number of requests per second
+	r.Use(middleware.Throttle(100, 100))
+
+	// cors settings
 	r.Use(cors.New(cors.Config{
 		AllowOrigins:     []string{"http://localhost:8081", "https://visense.f4.htw-berlin.de"},
 		AllowMethods:     []string{"GET", "PATCH"},

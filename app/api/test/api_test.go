@@ -63,3 +63,19 @@ func TestSqlInjection2(t *testing.T) {
 
 	assert.NotEqual(t, uint(0), s.ID)
 }
+
+func TestRateLimiter(t *testing.T) {
+	r := SetupRouter()
+
+	for i := 0; i < 200; i++ {
+		w := httptest.NewRecorder()
+		req, _ := http.NewRequest("GET", "/sensors/1", nil)
+		r.ServeHTTP(w, req)
+
+		if i > 100 && w.Code == 429 {
+			return
+		}
+	}
+
+	assert.Fail(t, "Rate limit not intervened.")
+}
