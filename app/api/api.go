@@ -9,7 +9,6 @@ import (
 	swaggerFiles "github.com/swaggo/files"
 	ginSwagger "github.com/swaggo/gin-swagger"
 	"net/http"
-	"time"
 )
 
 //@title vi-sense BIM API
@@ -29,14 +28,15 @@ func SetupRouter() *gin.Engine {
 	r.Use(middleware.Throttle(100, 100))
 
 	// cors settings
-	r.Use(cors.New(cors.Config{
+	/*r.Use(cors.New(cors.Config{
 		AllowOrigins:     []string{"http://localhost:8081", "https://visense.f4.htw-berlin.de"},
 		AllowMethods:     []string{"GET", "PATCH"},
 		AllowHeaders:     []string{"Origin"},
 		ExposeHeaders:    []string{"Content-Length"},
 		AllowCredentials: true,
 		MaxAge: 12 * time.Hour,
-	}))
+	}))*/
+	r.Use(cors.Default())
 
 	r.Static("/files", "/sample-data/models/")
 
