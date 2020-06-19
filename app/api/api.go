@@ -32,7 +32,7 @@ func GetEnv(key string, defVal string) string {
 func SetupRouter() *gin.Engine {
 
 	docs.SwaggerInfo.Host = fmt.Sprintf("%s:%s", GetEnv("HOST", "localhost"), GetEnv("PORT", "8080"))
-	docs.SwaggerInfo.Host = GetEnv("SCHEME", "http")
+	docs.SwaggerInfo.Schemes = []string{GetEnv("SCHEME", "http")}
 	r := gin.Default()
 
 	if GetEnv("PRODUCTION", "false") == "true" {
