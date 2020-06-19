@@ -36,7 +36,7 @@ func SetupRouter() *gin.Engine {
 	docs.SwaggerInfo.Schemes = []string{GetEnv("SCHEME", "http")}
 	r := gin.Default()
 
-	if GetEnv("PRODUCTION", "false") == "false" {
+	if GetEnv("PRODUCTION", "false") == "true" {
 		r.Use(gzip.Gzip(gzip.BestSpeed))
 		fmt.Println("[i] Using gzip.")
 	}
