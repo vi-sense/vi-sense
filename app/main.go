@@ -12,7 +12,7 @@ import (
 func main() {
 	SetupDatabase(true)
 
-	LoadModels("/sample-data", []string{"berlin", "cape-town", "puerto-natales", "sample-model"}, 10)
+	LoadModels("/sample-data", []string{"berlin", "cape-town", "puerto-natales", "sample-model"}, -1)
 
 	//check if bind mount is working
 	dat, err := ioutil.ReadFile("/sample-data/info.txt")
