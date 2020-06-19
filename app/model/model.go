@@ -97,11 +97,11 @@ func SetupDatabase(drop bool) {
 	fmt.Println("[✓] schemes migrated")
 }
 
-func CreateMockData(sampleDataPath string, modelFolders []string, dataLimit int) {
+func LoadModels(dataPath string, modelFolders []string, dataLimit int) {
 	fmt.Printf("[i] loading sensor data %s\n", time.Now().String())
 
 	for i, folder := range modelFolders {
-		f, _ := ioutil.ReadFile(fmt.Sprintf("%s/sensors/%s/model.json", sampleDataPath, folder))
+		f, _ := ioutil.ReadFile(fmt.Sprintf("%s/sensors/%s/model.json", dataPath, folder))
 		var m *RoomModel
 
 		if err := json.Unmarshal(f, &m); err != nil {
@@ -110,7 +110,7 @@ func CreateMockData(sampleDataPath string, modelFolders []string, dataLimit int)
 		}
 
 		for i := range m.Sensors {
-			m.Sensors[i].Data = loadSampleData(fmt.Sprintf("%s/sensors/%s/%s", sampleDataPath, folder, m.Sensors[i].ImportName), dataLimit)
+			m.Sensors[i].Data = loadData(fmt.Sprintf("%s/sensors/%s/%s", dataPath, folder, m.Sensors[i].ImportName), dataLimit)
 		}
 		DB.Create(&m)
 		fmt.Printf("[✓] model %s loaded %s\n", folder, time.Now().String())
@@ -140,7 +140,7 @@ func DeleteTestDatabase() {
 	}
 }
 
-func loadSampleData(path string, dataLimit int) []Data {
+func loadData(path string, dataLimit int) []Data {
 	file, err := os.Open(path)
 	if err != nil {
 		fmt.Println("[!] Error loading file")

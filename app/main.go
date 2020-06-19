@@ -11,7 +11,8 @@ import (
 
 func main() {
 	SetupDatabase(true)
-        CreateMockData("/sample-data", []string{"berlin", "cape-town", "puerto-natales", "sample-model"}, -1)
+
+	LoadModels("/sample-data", []string{"berlin", "cape-town", "puerto-natales", "sample-model"}, -1)
 
 	//check if bind mount is working
 	dat, err := ioutil.ReadFile("/sample-data/info.txt")

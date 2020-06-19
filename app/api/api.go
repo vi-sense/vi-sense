@@ -4,25 +4,40 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/gin-contrib/cors"
+	"github.com/gin-contrib/gzip"
 	"github.com/gin-gonic/gin"
 	"github.com/s12i/gin-throttle"
 	swaggerFiles "github.com/swaggo/files"
 	ginSwagger "github.com/swaggo/gin-swagger"
+	"github.com/vi-sense/vi-sense/app/docs"
 	"net/http"
+	"os"
 )
 
+func GetEnv(key string, defVal string) string {
+	if value, exists := os.LookupEnv(key); exists {
+		return value
+	}
+
+	return defVal
+}
+
 //@title vi-sense BIM API
-//@version 0.1.6
+//@version 0.1.7
 //@description This API provides information about 3D room models with associated sensors and their data.
 
-//@host visense.f4.htw-berlin.de:44344
 //@BasePath /
-//@schemes https
 
 //SetupRouter initializes all available routes / endpoints and the access to static files
 func SetupRouter() *gin.Engine {
 
+	docs.SwaggerInfo.Host = fmt.Sprintf("%s:%s", GetEnv("HOST", "localhost"), GetEnv("PORT", "8080"))
+	docs.SwaggerInfo.Schemes = []string{GetEnv("SCHEME", "http")}
 	r := gin.Default()
+
+	if GetEnv("PRODUCTION", "false") == "true" {
+		r.Use(gzip.Gzip(gzip.BestSpeed))
+	}
 
 	//to limit the number of requests per second
 	r.Use(middleware.Throttle(100, 100))

@@ -83,14 +83,13 @@ definitions:
       upper_bound:
         type: number
     type: object
-host: visense.f4.htw-berlin.de:44344
 info:
   contact: {}
   description: This API provides information about 3D room models with associated
     sensors and their data.
   license: {}
   title: vi-sense BIM API
-  version: 0.1.6
+  version: 0.1.7
 paths:
   /models:
     get:
@@ -320,6 +319,4 @@ paths:
       summary: Query sensor data
       tags:
       - sensors
-schemes:
-- https
 swagger: "2.0"

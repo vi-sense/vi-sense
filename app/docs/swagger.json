@@ -1,16 +1,12 @@
 {
-    "schemes": [
-        "https"
-    ],
     "swagger": "2.0",
     "info": {
         "description": "This API provides information about 3D room models with associated sensors and their data.",
         "title": "vi-sense BIM API",
         "contact": {},
         "license": {},
-        "version": "0.1.6"
+        "version": "0.1.7"
     },
-    "host": "visense.f4.htw-berlin.de:44344",
     "basePath": "/",
     "paths": {
         "/models": {

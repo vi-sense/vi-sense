@@ -19,6 +19,7 @@ services:
       - database
     env_file:
       - database.env #configure db access
+      - backend.env
 
   frontend:
     image: romankrajewski/visense-frontend:latest
