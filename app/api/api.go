@@ -19,6 +19,7 @@ func GetEnv(key string, defVal string) string {
 		return value
 	}
 
+	fmt.Printf("Could not read %s returning default value %s.\n", key, defVal)
 	return defVal
 }
 
@@ -35,8 +36,9 @@ func SetupRouter() *gin.Engine {
 	docs.SwaggerInfo.Schemes = []string{GetEnv("SCHEME", "http")}
 	r := gin.Default()
 
-	if GetEnv("PRODUCTION", "false") == "true" {
+	if GetEnv("PRODUCTION", "false") == "false" {
 		r.Use(gzip.Gzip(gzip.BestSpeed))
+		fmt.Println("[i] Using gzip.")
 	}
 
 	//to limit the number of requests per second
