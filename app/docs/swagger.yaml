@@ -2,16 +2,12 @@ basePath: /
 definitions:
   api.Anomaly:
     properties:
-      date:
-        type: Date
-      gradient:
-        type: number
-      types:
-        items:
-          type: string
-        type: array
-      value:
-        type: number
+      end_data:
+        type: Data
+      start_data:
+        type: Data
+      type:
+        type: string
     type: object
   api.UpdateSensor:
     properties:
@@ -89,7 +85,7 @@ info:
     sensors and their data.
   license: {}
   title: vi-sense BIM API
-  version: 0.1.7
+  version: 0.1.8
 paths:
   /models:
     get:

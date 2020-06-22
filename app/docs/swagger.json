@@ -5,7 +5,7 @@
         "title": "vi-sense BIM API",
         "contact": {},
         "license": {},
-        "version": "0.1.7"
+        "version": "0.1.8"
     },
     "basePath": "/",
     "paths": {
@@ -359,20 +359,14 @@
         "api.Anomaly": {
             "type": "object",
             "properties": {
-                "date": {
-                    "type": "Date"
+                "end_data": {
+                    "type": "Data"
                 },
-                "gradient": {
-                    "type": "number"
+                "start_data": {
+                    "type": "Data"
                 },
-                "types": {
-                    "type": "array",
-                    "items": {
-                        "type": "string"
-                    }
-                },
-                "value": {
-                    "type": "number"
+                "type": {
+                    "type": "string"
                 }
             }
         },
