@@ -24,7 +24,7 @@ func GetEnv(key string, defVal string) string {
 }
 
 //@title vi-sense BIM API
-//@version 0.1.7
+//@version 0.1.8
 //@description This API provides information about 3D room models with associated sensors and their data.
 
 //@BasePath /

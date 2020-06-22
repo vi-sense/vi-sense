@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"github.com/gin-gonic/gin"
 	. "github.com/vi-sense/vi-sense/app/model"
-	"math"
 	"net/http"
 	"sort"
 	"strconv"
@@ -31,10 +30,9 @@ func (e *ParamParseError) Error() string {
 }
 
 type Anomaly struct {
-	Types    []AnomalyType `json:"types"`
-	Date     Date          `json:"date"`
-	Value    float64       `json:"value"`
-	Gradient float64       `json:"gradient"`
+	Type      AnomalyType `json:"type"`
+	StartData *Data       `json:"start_data"`
+	EndData   *Data       `json:"end_data"`
 }
 
 type AnomalyType string
@@ -195,35 +193,66 @@ func QueryAnomalies(c *gin.Context) (int, string) {
 	var r []Data
 	q.Find(&r)
 
-	a := make([]Anomaly, 0)
+	anomalies := make([]Anomaly, 0)
+	currAnomalies := make([]*Anomaly, 4)
 
-	for _, d := range r {
-		var types []AnomalyType
-
+	for i := 0; i < len(r); i++ {
 		// search for data below the specified lower value limit
-		if s.LowerBound != nil && d.Value < *s.LowerBound {
-			types = append(types, BelowLowerLimit)
-		}
-
-		// search for data below the specified lower value limit
-		if s.UpperBound != nil && d.Value > *s.UpperBound {
-			types = append(types, AboveUpperLimit)
-		}
-
-		if s.GradientBound != nil && (math.Abs(d.Gradient) > *s.GradientBound) {
-			if d.Gradient >= 0 {
-				types = append(types, UpwardGradient)
+		if s.LowerBound != nil && r[i].Value < *s.LowerBound {
+			if currAnomalies[0] == nil {
+				currAnomalies[0] = &Anomaly{Type: BelowLowerLimit, StartData: &r[i], EndData: nil}
 			} else {
-				types = append(types, DownwardGradient)
+				currAnomalies[0].EndData = &r[i]
 			}
+		} else if currAnomalies[0] != nil {
+			anomalies = append(anomalies, *currAnomalies[0])
+			currAnomalies[0] = nil
 		}
 
-		if len(types) > 0 {
-			a = append(a, Anomaly{Gradient: d.Gradient, Types: types, Value: d.Value, Date: d.Date})
+		if s.UpperBound != nil && r[i].Value > *s.UpperBound {
+			if currAnomalies[1] == nil {
+				currAnomalies[1] = &Anomaly{Type: AboveUpperLimit, StartData: &r[i], EndData: nil}
+			} else {
+				currAnomalies[1].EndData = &r[i]
+			}
+		} else if currAnomalies[1] != nil {
+			anomalies = append(anomalies, *currAnomalies[1])
+			currAnomalies[1] = nil
+		}
+
+		if s.GradientBound != nil {
+
+			if r[i].Gradient >= 0 && r[i].Gradient > *s.GradientBound {
+				if currAnomalies[2] == nil {
+					currAnomalies[2] = &Anomaly{Type: UpwardGradient, StartData: &r[i], EndData: nil}
+				} else {
+					currAnomalies[2].EndData = &r[i]
+				}
+			} else if currAnomalies[2] != nil {
+				anomalies = append(anomalies, *currAnomalies[2])
+				currAnomalies[2] = nil
+			}
+
+			if r[i].Gradient < 0 && r[i].Gradient < -*s.GradientBound {
+				if currAnomalies[3] == nil {
+					currAnomalies[3] = &Anomaly{Type: DownwardGradient, StartData: &r[i], EndData: nil}
+				} else {
+					currAnomalies[3].EndData = &r[i]
+				}
+			} else if currAnomalies[3] != nil {
+				anomalies = append(anomalies, *currAnomalies[3])
+				currAnomalies[3] = nil
+			}
 		}
 	}
 
-	return http.StatusOK, AsJSON(a)
+	for _, a := range currAnomalies {
+		if a != nil {
+			anomalies = append(anomalies, *a)
+		}
+	}
+
+	return http.StatusOK, AsJSON(anomalies)
 }
 
 func fillQueryParams(c *gin.Context, m *map[string]interface{}) error {
