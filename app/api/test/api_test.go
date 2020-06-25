@@ -15,7 +15,7 @@ import (
 // You can read TestWithoutAuth's comment to know how to not share database each case.
 func TestMain(m *testing.M) {
 	SetupTestDatabase()
-	LoadModels("../../../sample-data", []string{"berlin", "cape-town", "puerto-natales", "sample-model"}, 5)
+	LoadModels("../../../sample-data", []string{"berlin"}, 5)
 	exitVal := m.Run()
 	DeleteTestDatabase()
 	os.Exit(exitVal)
