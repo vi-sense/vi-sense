@@ -8,6 +8,7 @@ import (
 	"math"
 	"os"
 	"strconv"
+	"sync"
 	"time"
 
 	"github.com/gocarina/gocsv"
@@ -21,9 +22,11 @@ type RoomModel struct {
 	ID          uint     `json:"id"`
 	Sensors     []Sensor `json:"sensors"`
 	Name        string   `json:"name"`
-	Description string   `json:"description"`
 	Url         string   `json:"url"`
 	ImageUrl    string   `json:"image_url"`
+	Type        string   `json:"type"`
+	Location    string   `json:"location"`
+	Floors		int		 `json:"floors"`
 }
 
 //Sensor specifies the structure for a single sensor which is located inside a RoomModel
@@ -37,6 +40,7 @@ type Sensor struct {
 	Name            string   `json:"name"`
 	Description     string   `json:"description"`
 	MeasurementUnit string   `json:"measurement_unit"`
+	Range			string   `json:"range"`
 	UpperBound      *float64 `json:"upper_bound"`
 	LowerBound      *float64 `json:"lower_bound"`
 	GradientBound   *float64 `json:"gradient_bound"`
@@ -100,22 +104,30 @@ func SetupDatabase(drop bool) {
 func LoadModels(dataPath string, modelFolders []string, dataLimit int) {
 	fmt.Printf("[i] loading sensor data %s\n", time.Now().String())
 
-	for i, folder := range modelFolders {
-		f, _ := ioutil.ReadFile(fmt.Sprintf("%s/sensors/%s/model.json", dataPath, folder))
-		var m *RoomModel
+	var wg sync.WaitGroup
+	wg.Add(len(modelFolders))
 
-		if err := json.Unmarshal(f, &m); err != nil {
-			fmt.Println("error loading model: ", modelFolders[i])
-			panic(err)
-		}
+	for _, folder := range modelFolders {
+		go func(folder string) {
+			defer wg.Done()
+			f, _ := ioutil.ReadFile(fmt.Sprintf("%s/sensors/%s/model.json", dataPath, folder))
+			var m *RoomModel
 
-		for i := range m.Sensors {
-			m.Sensors[i].Data = loadData(fmt.Sprintf("%s/sensors/%s/%s", dataPath, folder, m.Sensors[i].ImportName), dataLimit)
-		}
-		DB.Create(&m)
-		fmt.Printf("[✓] model %s loaded %s\n", folder, time.Now().String())
+			if err := json.Unmarshal(f, &m); err != nil {
+				fmt.Println("error loading model: ", folder)
+				panic(err)
+			}
+
+			for i := range m.Sensors {
+				m.Sensors[i].Data = loadData(fmt.Sprintf("%s/sensors/%s/%s", dataPath, folder, m.Sensors[i].ImportName), dataLimit)
+			}
+
+			DB.Create(&m)
+			fmt.Printf("[✓] model %s loaded %s\n", folder, time.Now().String())
+		}(folder)
 	}
 
+	wg.Wait()
 	fmt.Printf("[✓] finished loading sensor data %s\n", time.Now().String())
 }
 
