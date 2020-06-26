@@ -4,6 +4,8 @@ definitions:
     properties:
       end_data:
         type: Data
+      peak_data:
+        type: Data
       start_data:
         type: Data
       type:
@@ -38,11 +40,13 @@ definitions:
     type: object
   model.RoomModel:
     properties:
-      description:
-        type: string
+      floors:
+        type: integer
       id:
         type: integer
       image_url:
+        type: string
+      location:
         type: string
       name:
         type: string
@@ -50,6 +54,8 @@ definitions:
         items:
           $ref: '#/definitions/model.Sensor'
         type: array
+      type:
+        type: string
       url:
         type: string
     type: object
@@ -73,6 +79,8 @@ definitions:
       mesh_id:
         type: string
       name:
+        type: string
+      range:
         type: string
       room_model_id:
         type: integer
@@ -282,6 +290,10 @@ paths:
       - description: Data Limit
         in: query
         name: limit
+        type: integer
+      - description: Include only every nth element [1-16]
+        in: query
+        name: density
         type: integer
       - description: Start Date
         in: query
