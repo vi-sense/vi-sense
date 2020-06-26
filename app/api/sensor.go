@@ -33,6 +33,7 @@ type Anomaly struct {
 	Type      AnomalyType `json:"type"`
 	StartData *Data       `json:"start_data"`
 	EndData   *Data       `json:"end_data"`
+	PeakData  *Data       `json:"peak_data"`
 }
 
 type AnomalyType string
@@ -93,6 +94,7 @@ func QuerySensor(c *gin.Context) (int, string) {
 //@Produce json
 //@Param id path int true "Sensor ID"
 //@Param limit query int false "Data Limit"
+//@Param density query int false "Include only every nth element [1-16]"
 //@Param start_date query string false "Start Date"
 //@Param end_date query string false "End Date"
 //@Success 200 {array} model.Data
@@ -107,6 +109,7 @@ func QuerySensorData(c *gin.Context) (int, string) {
 		"start_date": "",
 		"end_date":   "",
 		"limit":      int64(1000),
+		"density":    int64(1),
 	}
 
 	// check if sensor exists
@@ -120,8 +123,6 @@ func QuerySensorData(c *gin.Context) (int, string) {
 	if err != nil {
 		return http.StatusBadRequest, AsJSON(gin.H{"error": err.Error()})
 	}
-
-	fmt.Println(queryParams["limit"])
 
 	// query sensor data within defined time period
 	r := make([]Data, 0)
@@ -144,7 +145,22 @@ func QuerySensorData(c *gin.Context) (int, string) {
 		return r[i].Date.Time.Before(r[j].Date.Time)
 	})
 
-	return http.StatusOK, AsJSON(r)
+	density := int(queryParams["density"].(int64))
+	if density < 1 || density > 16 {
+		return http.StatusBadRequest, AsJSON(gin.H{"error":
+		fmt.Sprintf("Data density is out of its range [1-16] value=%d.", density)})
+	}
+
+	var result []Data
+	if density != 1 {
+		for i := 0; i < len(r); i += density {
+			result = append(result, r[i])
+		}
+	} else {
+		result = r
+	}
+
+	return http.StatusOK, AsJSON(result)
 }
 
 //QuerySensor godoc
@@ -197,48 +213,79 @@ func QueryAnomalies(c *gin.Context) (int, string) {
 	currAnomalies := make([]*Anomaly, 4)
 
 	for i := 0; i < len(r); i++ {
-		// search for data below the specified lower value limit
 		if s.LowerBound != nil && r[i].Value < *s.LowerBound {
+			// new anomaly occurred
 			if currAnomalies[0] == nil {
 				currAnomalies[0] = &Anomaly{Type: BelowLowerLimit, StartData: &r[i], EndData: nil}
+				currAnomalies[0].PeakData = &r[i]
+			// anomaly goes on
 			} else {
+				// new peak value
+				if r[i].Value < currAnomalies[0].PeakData.Value {
+					currAnomalies[0].PeakData = &r[i]
+				}
 				currAnomalies[0].EndData = &r[i]
 			}
+
+		// anomaly ended
 		} else if currAnomalies[0] != nil {
 			anomalies = append(anomalies, *currAnomalies[0])
 			currAnomalies[0] = nil
 		}
 
 		if s.UpperBound != nil && r[i].Value > *s.UpperBound {
+			// new anomaly occurred
 			if currAnomalies[1] == nil {
 				currAnomalies[1] = &Anomaly{Type: AboveUpperLimit, StartData: &r[i], EndData: nil}
+				currAnomalies[1].PeakData = &r[i]
+			// anomaly goes on
 			} else {
+				// new peak value
+				if r[i].Value > currAnomalies[1].PeakData.Value {
+					currAnomalies[1].PeakData = &r[i]
+				}
 				currAnomalies[1].EndData = &r[i]
 			}
+		// anomaly ended
 		} else if currAnomalies[1] != nil {
 			anomalies = append(anomalies, *currAnomalies[1])
 			currAnomalies[1] = nil
 		}
 
 		if s.GradientBound != nil {
-
 			if r[i].Gradient >= 0 && r[i].Gradient > *s.GradientBound {
+				// new anomaly occurred
 				if currAnomalies[2] == nil {
 					currAnomalies[2] = &Anomaly{Type: UpwardGradient, StartData: &r[i], EndData: nil}
+					currAnomalies[2].PeakData = &r[i]
+				// anomaly goes on
 				} else {
+					// new peak gradient
+					if r[i].Gradient > currAnomalies[2].PeakData.Gradient {
+						currAnomalies[2].PeakData = &r[i]
+					}
 					currAnomalies[2].EndData = &r[i]
 				}
+			// anomaly ended
 			} else if currAnomalies[2] != nil {
 				anomalies = append(anomalies, *currAnomalies[2])
 				currAnomalies[2] = nil
 			}
 
 			if r[i].Gradient < 0 && r[i].Gradient < -*s.GradientBound {
+				// new anomaly occurred
 				if currAnomalies[3] == nil {
 					currAnomalies[3] = &Anomaly{Type: DownwardGradient, StartData: &r[i], EndData: nil}
+					currAnomalies[3].PeakData = &r[i]
+				// anomaly goes on
 				} else {
+					// new peak gradient
+					if r[i].Gradient < currAnomalies[3].PeakData.Gradient {
+						currAnomalies[3].PeakData = &r[i]
+					}
 					currAnomalies[3].EndData = &r[i]
 				}
+			// anomaly ended
 			} else if currAnomalies[3] != nil {
 				anomalies = append(anomalies, *currAnomalies[3])
 				currAnomalies[3] = nil

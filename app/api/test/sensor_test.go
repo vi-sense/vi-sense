@@ -66,9 +66,53 @@ func TestQuerySensorData(t *testing.T) {
 	var a []interface{}
 	_ = json.Unmarshal(w.Body.Bytes(), &a)
 
-	s := w.Body.String()
-	fmt.Println(s)
 	assert.Equal(t, 5, len(a))
+}
+
+func TestQuerySensorDataDensity(t *testing.T) {
+	r := SetupRouter()
+	w := httptest.NewRecorder()
+	req, _ := http.NewRequest(http.MethodGet, "/sensors/1/data", nil)
+	r.ServeHTTP(w, req)
+
+	assert.Equal(t, 200, w.Code)
+
+	var a []interface{}
+	_ = json.Unmarshal(w.Body.Bytes(), &a)
+
+	assert.Equal(t, 5, len(a))
+
+	w = httptest.NewRecorder()
+	req, _ = http.NewRequest(http.MethodGet, "/sensors/1/data?density=2", nil)
+	r.ServeHTTP(w, req)
+
+	assert.Equal(t, 200, w.Code)
+
+	_ = json.Unmarshal(w.Body.Bytes(), &a)
+
+	x := w.Body.String()
+	fmt.Println(x)
+	assert.Equal(t, 3, len(a))
+}
+
+func TestQuerySensorDataDensityOutOfRange(t *testing.T) {
+	r := SetupRouter()
+	w := httptest.NewRecorder()
+	req, _ := http.NewRequest(http.MethodGet, "/sensors/1/data?density=-1", nil)
+	r.ServeHTTP(w, req)
+	assert.Equal(t, 400, w.Code)
+
+	w = httptest.NewRecorder()
+	req, _ = http.NewRequest(http.MethodGet, "/sensors/1/data?density=18", nil)
+	r.ServeHTTP(w, req)
+
+	assert.Equal(t, 400, w.Code)
+
+	w = httptest.NewRecorder()
+	req, _ = http.NewRequest(http.MethodGet, "/sensors/1/data?density=d", nil)
+	r.ServeHTTP(w, req)
+
+	assert.Equal(t, 400, w.Code)
 }
 
 func TestQuerySensorDataStartDate(t *testing.T) {
@@ -267,11 +311,17 @@ func TestQueryAnomaliesLowerBound(t *testing.T) {
 	r.ServeHTTP(w, req)
 	assert.Equal(t, 200, w.Code)
 
-	expected := "[{\"type\":\"Below Lower Limit\",\"start_data\":{\"id\":1,\"sensor_id\":1,\"value\":58.85," +
-		"\"gradient\":0,\"date\":\"2019-10-01T00:00:00Z\"},\"end_data\":null},{\"type\":\"Below Lower Limit\"," +
-		"\"start_data\":{\"id\":3,\"sensor_id\":1,\"value\":58.599918,\"gradient\":-0.00291," +
-		"\"date\":\"2019-10-01T00:10:31Z\"},\"end_data\":{\"id\":5,\"sensor_id\":1,\"value\":58.572021," +
-		"\"gradient\":0.00006,\"date\":\"2019-10-01T00:20:33Z\"}}]"
+	expected := "[" +
+		"{\"type\":\"Below Lower Limit\"," +
+		"\"start_data\":{\"id\":1,\"sensor_id\":1,\"value\":58.85,\"gradient\":0,\"date\":\"2019-10-01T00:00:00Z\"}," +
+		"\"end_data\":null," +
+		"\"peak_data\":{\"id\":1,\"sensor_id\":1,\"value\":58.85,\"gradient\":0,\"date\":\"2019-10-01T00:00:00Z\"}" +
+		"}," +
+		"{\"type\":\"Below Lower Limit\"," +
+		"\"start_data\":{\"id\":3,\"sensor_id\":1,\"value\":58.599918,\"gradient\":-0.00291,\"date\":\"2019-10-01T00:10:31Z\"}," +
+		"\"end_data\":{\"id\":5,\"sensor_id\":1,\"value\":58.572021,\"gradient\":0.00006,\"date\":\"2019-10-01T00:20:33Z\"}," +
+		"\"peak_data\":{\"id\":4,\"sensor_id\":1,\"value\":58.553765,\"gradient\":-0.00015,\"date\":\"2019-10-01T00:15:32Z\"}" +
+		"}]"
 
 	assert.Equal(t, expected, w.Body.String())
 
@@ -297,9 +347,12 @@ func TestQueryAnomaliesUpperBound(t *testing.T) {
 	r.ServeHTTP(w, req)
 	assert.Equal(t, 200, w.Code)
 
-	expected := "[{\"type\":\"Above Upper Limit\",\"start_data\":{\"id\":1,\"sensor_id\":1,\"value\":58.85," +
-		"\"gradient\":0,\"date\":\"2019-10-01T00:00:00Z\"},\"end_data\":{\"id\":2,\"sensor_id\":1," +
-		"\"value\":59.50921,\"gradient\":0.00207,\"date\":\"2019-10-01T00:05:18Z\"}}]"
+	expected := "[" +
+		"{\"type\":\"Above Upper Limit\"," +
+		"\"start_data\":{\"id\":1,\"sensor_id\":1,\"value\":58.85,\"gradient\":0,\"date\":\"2019-10-01T00:00:00Z\"}," +
+		"\"end_data\":{\"id\":2,\"sensor_id\":1,\"value\":59.50921,\"gradient\":0.00207,\"date\":\"2019-10-01T00:05:18Z\"}," +
+		"\"peak_data\":{\"id\":2,\"sensor_id\":1,\"value\":59.50921,\"gradient\":0.00207,\"date\":\"2019-10-01T00:05:18Z\"}" +
+		"}]"
 
 	assert.Equal(t, expected, w.Body.String())
 
@@ -325,10 +378,17 @@ func TestQueryAnomaliesUpwardGradient(t *testing.T) {
 	r.ServeHTTP(w, req)
 	assert.Equal(t, 200, w.Code)
 
-	expected := "[{\"type\":\"High Upward Gradient\",\"start_data\":{\"id\":2,\"sensor_id\":1,\"value\":59.50921," +
-		"\"gradient\":0.00207,\"date\":\"2019-10-01T00:05:18Z\"},\"end_data\":null}," +
-		"{\"type\":\"High Downward Gradient\",\"start_data\":{\"id\":3,\"sensor_id\":1,\"value\":58.599918," +
-		"\"gradient\":-0.00291,\"date\":\"2019-10-01T00:10:31Z\"},\"end_data\":null}]"
+	expected := "[" +
+		"{\"type\":\"High Upward Gradient\"," +
+		"\"start_data\":{\"id\":2,\"sensor_id\":1,\"value\":59.50921,\"gradient\":0.00207,\"date\":\"2019-10-01T00:05:18Z\"}," +
+		"\"end_data\":null," +
+		"\"peak_data\":{\"id\":2,\"sensor_id\":1,\"value\":59.50921,\"gradient\":0.00207,\"date\":\"2019-10-01T00:05:18Z\"}" +
+		"}," +
+		"{\"type\":\"High Downward Gradient\"," +
+		"\"start_data\":{\"id\":3,\"sensor_id\":1,\"value\":58.599918,\"gradient\":-0.00291,\"date\":\"2019-10-01T00:10:31Z\"}," +
+		"\"end_data\":null," +
+		"\"peak_data\":{\"id\":3,\"sensor_id\":1,\"value\":58.599918,\"gradient\":-0.00291,\"date\":\"2019-10-01T00:10:31Z\"}" +
+		"}]"
 	assert.Equal(t, expected, w.Body.String())
 
 	i = map[string]interface{}{"gradient_bound": nil}
@@ -353,8 +413,11 @@ func TestQueryAnomaliesDownwardGradient(t *testing.T) {
 	r.ServeHTTP(w, req)
 	assert.Equal(t, 200, w.Code)
 
-	expected := "[{\"type\":\"High Downward Gradient\",\"start_data\":{\"id\":3,\"sensor_id\":1,\"value\":58.599918," +
-		"\"gradient\":-0.00291,\"date\":\"2019-10-01T00:10:31Z\"},\"end_data\":null}]"
+	expected := "[{\"type\":\"High Downward Gradient\"," +
+		"\"start_data\":{\"id\":3,\"sensor_id\":1,\"value\":58.599918,\"gradient\":-0.00291,\"date\":\"2019-10-01T00:10:31Z\"}," +
+		"\"end_data\":null," +
+		"\"peak_data\":{\"id\":3,\"sensor_id\":1,\"value\":58.599918,\"gradient\":-0.00291,\"date\":\"2019-10-01T00:10:31Z\"}" +
+		"}]"
 
 	assert.Equal(t, expected, w.Body.String())
 
@@ -380,13 +443,21 @@ func TestQueryAnomaliesCombined(t *testing.T) {
 	r.ServeHTTP(w, req)
 	assert.Equal(t, 200, w.Code)
 
-	expected := "[{\"type\":\"High Upward Gradient\",\"start_data\":{\"id\":2,\"sensor_id\":1,\"value\":59.50921," +
-		"\"gradient\":0.00207,\"date\":\"2019-10-01T00:05:18Z\"},\"end_data\":null},{\"type\":\"Above Upper Limit\"," +
+	expected := "[" +
+		"{\"type\":\"High Upward Gradient\"," +
+		"\"start_data\":{\"id\":2,\"sensor_id\":1,\"value\":59.50921,\"gradient\":0.00207,\"date\":\"2019-10-01T00:05:18Z\"}," +
+		"\"end_data\":null," +
+		"\"peak_data\":{\"id\":2,\"sensor_id\":1,\"value\":59.50921,\"gradient\":0.00207,\"date\":\"2019-10-01T00:05:18Z\"}" +
+		"}," +
+		"{\"type\":\"Above Upper Limit\"," +
 		"\"start_data\":{\"id\":1,\"sensor_id\":1,\"value\":58.85,\"gradient\":0,\"date\":\"2019-10-01T00:00:00Z\"}," +
-		"\"end_data\":{\"id\":3,\"sensor_id\":1,\"value\":58.599918,\"gradient\":-0.00291," +
-		"\"date\":\"2019-10-01T00:10:31Z\"}},{\"type\":\"High Downward Gradient\",\"start_data\":{\"id\":3," +
-		"\"sensor_id\":1,\"value\":58.599918,\"gradient\":-0.00291,\"date\":\"2019-10-01T00:10:31Z\"}," +
-		"\"end_data\":null}]"
+		"\"end_data\":{\"id\":3,\"sensor_id\":1,\"value\":58.599918,\"gradient\":-0.00291,\"date\":\"2019-10-01T00:10:31Z\"}," +
+		"\"peak_data\":{\"id\":2,\"sensor_id\":1,\"value\":59.50921,\"gradient\":0.00207,\"date\":\"2019-10-01T00:05:18Z\"}" +
+		"}," +
+		"{\"type\":\"High Downward Gradient\"," +
+		"\"start_data\":{\"id\":3,\"sensor_id\":1,\"value\":58.599918,\"gradient\":-0.00291,\"date\":\"2019-10-01T00:10:31Z\"}," +
+		"\"end_data\":null," +
+		"\"peak_data\":{\"id\":3,\"sensor_id\":1,\"value\":58.599918,\"gradient\":-0.00291,\"date\":\"2019-10-01T00:10:31Z\"}}]"
 
 	assert.Equal(t, expected, w.Body.String())
 
@@ -412,8 +483,12 @@ func TestQueryAnomaliesTimePeriod(t *testing.T) {
 	r.ServeHTTP(w, req)
 	assert.Equal(t, 200, w.Code)
 
-	expected := "[{\"type\":\"Above Upper Limit\",\"start_data\":{\"id\":2,\"sensor_id\":1,\"value\":59.50921," +
-		"\"gradient\":0.00207,\"date\":\"2019-10-01T00:05:18Z\"},\"end_data\":null}]"
+	expected := "[" +
+		"{\"type\":\"Above Upper Limit\"," +
+		"\"start_data\":{\"id\":2,\"sensor_id\":1,\"value\":59.50921,\"gradient\":0.00207,\"date\":\"2019-10-01T00:05:18Z\"}," +
+		"\"end_data\":null," +
+		"\"peak_data\":{\"id\":2,\"sensor_id\":1,\"value\":59.50921,\"gradient\":0.00207,\"date\":\"2019-10-01T00:05:18Z\"}" +
+		"}]"
 	assert.Equal(t, expected, w.Body.String())
 
 	i = map[string]interface{}{"upper_bound": nil}
@@ -434,12 +509,11 @@ func TestQueryAnomaliesOutsideTimePeriod(t *testing.T) {
 	assert.Equal(t, 200, w.Code)
 
 	w = httptest.NewRecorder()
-	req, _ = http.NewRequest(http.MethodGet, "/sensors/1/anomalies?start_date=2019-10-01 00:05:00&end_date=2019-10-01 00:10:00", nil)
+	req, _ = http.NewRequest(http.MethodGet, "/sensors/1/anomalies?start_date=2018-10-01 00:05:00&end_date=2018-10-01 00:10:00", nil)
 	r.ServeHTTP(w, req)
 	assert.Equal(t, 200, w.Code)
 
-	expected := "[{\"type\":\"Above Upper Limit\",\"start_data\":{\"id\":2,\"sensor_id\":1,\"value\":59.50921," +
-		"\"gradient\":0.00207,\"date\":\"2019-10-01T00:05:18Z\"},\"end_data\":null}]"
+	expected := "[]"
 
 	assert.Equal(t, expected, w.Body.String())
 
