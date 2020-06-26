@@ -311,6 +311,12 @@
                         "in": "query"
                     },
                     {
+                        "type": "integer",
+                        "description": "Include only every nth element [1-16]",
+                        "name": "density",
+                        "in": "query"
+                    },
+                    {
                         "type": "string",
                         "description": "Start Date",
                         "name": "start_date",
@@ -360,6 +366,9 @@
             "type": "object",
             "properties": {
                 "end_data": {
+                    "type": "Data"
+                },
+                "peak_data": {
                     "type": "Data"
                 },
                 "start_data": {
@@ -414,13 +423,16 @@
         "model.RoomModel": {
             "type": "object",
             "properties": {
-                "description": {
-                    "type": "string"
+                "floors": {
+                    "type": "integer"
                 },
                 "id": {
                     "type": "integer"
                 },
                 "image_url": {
+                    "type": "string"
+                },
+                "location": {
                     "type": "string"
                 },
                 "name": {
@@ -431,6 +443,9 @@
                     "items": {
                         "$ref": "#/definitions/model.Sensor"
                     }
+                },
+                "type": {
+                    "type": "string"
                 },
                 "url": {
                     "type": "string"
@@ -466,6 +481,9 @@
                     "type": "string"
                 },
                 "name": {
+                    "type": "string"
+                },
+                "range": {
                     "type": "string"
                 },
                 "room_model_id": {
