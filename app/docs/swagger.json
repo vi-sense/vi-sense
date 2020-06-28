@@ -5,7 +5,7 @@
         "title": "vi-sense BIM API",
         "contact": {},
         "license": {},
-        "version": "0.1.8"
+        "version": "0.1.9"
     },
     "basePath": "/",
     "paths": {
@@ -478,7 +478,7 @@
                     "type": "string"
                 },
                 "mesh_id": {
-                    "type": "string"
+                    "type": "integer"
                 },
                 "name": {
                     "type": "string"
