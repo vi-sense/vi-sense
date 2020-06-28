@@ -165,7 +165,7 @@ func TestQuerySensorDataIDMalformed(t *testing.T) {
 func TestPatchSensor(t *testing.T) {
 	r := SetupRouter()
 	w := httptest.NewRecorder()
-	i := map[string]interface{}{"mesh_id": "node357"}
+	i := map[string]interface{}{"mesh_id": float64(357)}
 	req, _ := http.NewRequest(http.MethodPatch, "/sensors/1", strings.NewReader(AsJSON(i)))
 	r.ServeHTTP(w, req)
 	assert.Equal(t, 200, w.Code)
@@ -175,17 +175,25 @@ func TestPatchSensor(t *testing.T) {
 
 	assert.Equal(t, i["mesh_id"], m["mesh_id"])
 
+	w = httptest.NewRecorder()
 	// change data back
-	i = map[string]interface{}{"mesh_id": "node357"}
+	i = map[string]interface{}{"mesh_id": nil}
 	req, _ = http.NewRequest(http.MethodPatch, "/sensors/1", strings.NewReader(AsJSON(i)))
 	r.ServeHTTP(w, req)
 	assert.Equal(t, 200, w.Code)
+
+	var n map[string]interface{}
+	_ = json.Unmarshal(w.Body.Bytes(), &n)
+
+
+	assert.Equal(t, i["mesh_id"], n["mesh_id"])
+
 }
 
 func TestPatchSensorAllFields(t *testing.T) {
 	r := SetupRouter()
 	w := httptest.NewRecorder()
-	i := map[string]interface{}{"mesh_id": "node357", "lower_bound": 7.6, "upper_bound": 7.6, "gradient_bound": 7.6}
+	i := map[string]interface{}{"mesh_id": float64(357), "lower_bound": 7.6, "upper_bound": 7.6, "gradient_bound": 7.6}
 	req, _ := http.NewRequest(http.MethodPatch, "/sensors/1", strings.NewReader(AsJSON(i)))
 	r.ServeHTTP(w, req)
 	assert.Equal(t, 200, w.Code)
@@ -201,7 +209,7 @@ func TestPatchSensorAllFields(t *testing.T) {
 	w = httptest.NewRecorder()
 
 	// change data back
-	i = map[string]interface{}{"mesh_id": "358", "lower_bound": nil, "upper_bound": nil, "gradient_bound": nil}
+	i = map[string]interface{}{"mesh_id": nil, "lower_bound": nil, "upper_bound": nil, "gradient_bound": nil}
 	req, _ = http.NewRequest(http.MethodPatch, "/sensors/1", strings.NewReader(AsJSON(i)))
 	r.ServeHTTP(w, req)
 	assert.Equal(t, 200, w.Code)
