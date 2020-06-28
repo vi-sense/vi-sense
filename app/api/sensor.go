@@ -218,7 +218,7 @@ func QueryAnomalies(c *gin.Context) (int, string) {
 			if currAnomalies[0] == nil {
 				currAnomalies[0] = &Anomaly{Type: BelowLowerLimit, StartData: &r[i], EndData: nil}
 				currAnomalies[0].PeakData = &r[i]
-			// anomaly goes on
+				// anomaly goes on
 			} else {
 				// new peak value
 				if r[i].Value < currAnomalies[0].PeakData.Value {
@@ -227,7 +227,7 @@ func QueryAnomalies(c *gin.Context) (int, string) {
 				currAnomalies[0].EndData = &r[i]
 			}
 
-		// anomaly ended
+			// anomaly ended
 		} else if currAnomalies[0] != nil {
 			anomalies = append(anomalies, *currAnomalies[0])
 			currAnomalies[0] = nil
@@ -238,7 +238,7 @@ func QueryAnomalies(c *gin.Context) (int, string) {
 			if currAnomalies[1] == nil {
 				currAnomalies[1] = &Anomaly{Type: AboveUpperLimit, StartData: &r[i], EndData: nil}
 				currAnomalies[1].PeakData = &r[i]
-			// anomaly goes on
+				// anomaly goes on
 			} else {
 				// new peak value
 				if r[i].Value > currAnomalies[1].PeakData.Value {
@@ -246,7 +246,7 @@ func QueryAnomalies(c *gin.Context) (int, string) {
 				}
 				currAnomalies[1].EndData = &r[i]
 			}
-		// anomaly ended
+			// anomaly ended
 		} else if currAnomalies[1] != nil {
 			anomalies = append(anomalies, *currAnomalies[1])
 			currAnomalies[1] = nil
@@ -258,7 +258,7 @@ func QueryAnomalies(c *gin.Context) (int, string) {
 				if currAnomalies[2] == nil {
 					currAnomalies[2] = &Anomaly{Type: UpwardGradient, StartData: &r[i], EndData: nil}
 					currAnomalies[2].PeakData = &r[i]
-				// anomaly goes on
+					// anomaly goes on
 				} else {
 					// new peak gradient
 					if r[i].Gradient > currAnomalies[2].PeakData.Gradient {
@@ -266,7 +266,7 @@ func QueryAnomalies(c *gin.Context) (int, string) {
 					}
 					currAnomalies[2].EndData = &r[i]
 				}
-			// anomaly ended
+				// anomaly ended
 			} else if currAnomalies[2] != nil {
 				anomalies = append(anomalies, *currAnomalies[2])
 				currAnomalies[2] = nil
@@ -277,7 +277,7 @@ func QueryAnomalies(c *gin.Context) (int, string) {
 				if currAnomalies[3] == nil {
 					currAnomalies[3] = &Anomaly{Type: DownwardGradient, StartData: &r[i], EndData: nil}
 					currAnomalies[3].PeakData = &r[i]
-				// anomaly goes on
+					// anomaly goes on
 				} else {
 					// new peak gradient
 					if r[i].Gradient < currAnomalies[3].PeakData.Gradient {
@@ -285,7 +285,7 @@ func QueryAnomalies(c *gin.Context) (int, string) {
 					}
 					currAnomalies[3].EndData = &r[i]
 				}
-			// anomaly ended
+				// anomaly ended
 			} else if currAnomalies[3] != nil {
 				anomalies = append(anomalies, *currAnomalies[3])
 				currAnomalies[3] = nil
@@ -360,7 +360,7 @@ func PatchSensor(c *gin.Context) (int, string) {
 		return http.StatusBadRequest, AsJSON(gin.H{"error": err.Error()})
 	}
 
-	if err := validateUpdateValues(&i); err != nil {
+	if err := validateUpdateValues(i); err != nil {
 		return http.StatusBadRequest, AsJSON(gin.H{"error": err.Error()})
 	}
 
@@ -400,15 +400,21 @@ func parseIntParam(s string, def int64) (int64, error) {
 	return strconv.ParseInt(s, 10, 64)
 }
 
-func validateUpdateValues(m *map[string]interface{}) error {
+func validateUpdateValues(m map[string]interface{}) error {
 	var unknown []string
 
-	for k, v := range *m {
+	for k, v := range m {
 		switch k {
 		case "mesh_id":
-			if _, ok := v.(string); !ok {
-				return &ParamParseError{
-					Param: k,
+			if v != nil {
+				// check has to made for float because js uses float64 only
+				// https://stackoverflow.com/a/29690346
+				if _, ok := v.(float64); !ok {
+					return &ParamParseError{
+						Param: k,
+					}
+				} else {
+					m[k] = int64(v.(float64))
 				}
 			}
 
@@ -424,7 +430,7 @@ func validateUpdateValues(m *map[string]interface{}) error {
 	}
 
 	for _, u := range unknown {
-		delete(*m, u)
+		delete(m, u)
 	}
 
 	return nil

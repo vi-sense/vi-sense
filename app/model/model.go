@@ -19,14 +19,14 @@ import (
 
 //RoomModel specifies the structure for a single BIM model
 type RoomModel struct {
-	ID          uint     `json:"id"`
-	Sensors     []Sensor `json:"sensors"`
-	Name        string   `json:"name"`
-	Url         string   `json:"url"`
-	ImageUrl    string   `json:"image_url"`
-	Type        string   `json:"type"`
-	Location    string   `json:"location"`
-	Floors		int		 `json:"floors"`
+	ID       uint     `json:"id"`
+	Sensors  []Sensor `json:"sensors"`
+	Name     string   `json:"name"`
+	Url      string   `json:"url"`
+	ImageUrl string   `json:"image_url"`
+	Type     string   `json:"type"`
+	Location string   `json:"location"`
+	Floors   int      `json:"floors"`
 }
 
 //Sensor specifies the structure for a single sensor which is located inside a RoomModel
@@ -36,11 +36,11 @@ type Sensor struct {
 	LatestData      Data     `json:"latest_data" gorm:"-"`
 	Data            []Data   `json:"-"`
 	ImportName      string   `json:"import_name,omitempty" gorm:"-"`
-	MeshID          string   `json:"mesh_id"`
+	MeshID          *int64   `json:"mesh_id"`
 	Name            string   `json:"name"`
 	Description     string   `json:"description"`
 	MeasurementUnit string   `json:"measurement_unit"`
-	Range			string   `json:"range"`
+	Range           string   `json:"range"`
 	UpperBound      *float64 `json:"upper_bound"`
 	LowerBound      *float64 `json:"lower_bound"`
 	GradientBound   *float64 `json:"gradient_bound"`
