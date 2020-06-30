@@ -90,9 +90,64 @@ func TestQuerySensorDataDensity(t *testing.T) {
 
 	_ = json.Unmarshal(w.Body.Bytes(), &a)
 
-	x := w.Body.String()
-	fmt.Println(x)
 	assert.Equal(t, 3, len(a))
+}
+
+func TestQuerySensorDataHighDensity(t *testing.T) {
+	r := SetupRouter()
+	w := httptest.NewRecorder()
+	req, _ := http.NewRequest(http.MethodGet, "/sensors/1/data?density=16", nil)
+	r.ServeHTTP(w, req)
+
+	assert.Equal(t, 200, w.Code)
+
+	var a []interface{}
+	_ = json.Unmarshal(w.Body.Bytes(), &a)
+}
+
+func TestQuerySensorDataRangeDensity(t *testing.T) {
+	r := SetupRouter()
+	w := httptest.NewRecorder()
+	req, _ := http.NewRequest(http.MethodGet, "/sensors/1/data?start_date=2019-10-01 00:00:00&end_date=2019-10-01 00:15:00", nil)
+	r.ServeHTTP(w, req)
+
+	assert.Equal(t, 200, w.Code)
+	var a []interface{}
+	_ = json.Unmarshal(w.Body.Bytes(), &a)
+
+	assert.Equal(t, 3, len(a))
+
+	w = httptest.NewRecorder()
+	req, _ = http.NewRequest(http.MethodGet, "/sensors/1/data?density=2&start_date=2019-10-01 00:00:00&end_date=2019-10-01 00:15:00", nil)
+	r.ServeHTTP(w, req)
+
+	assert.Equal(t, 200, w.Code)
+	_ = json.Unmarshal(w.Body.Bytes(), &a)
+
+	assert.Equal(t, 2, len(a))
+}
+
+func TestQuerySensorDataEmptyDensity(t *testing.T) {
+	r := SetupRouter()
+	w := httptest.NewRecorder()
+	req, _ := http.NewRequest(http.MethodGet, "/sensors/1/data?start_date=2019-10-01 00:00:00&end_date=2019-10-01 00:00:00", nil)
+	r.ServeHTTP(w, req)
+
+	assert.Equal(t, 200, w.Code)
+	var a []interface{}
+	_ = json.Unmarshal(w.Body.Bytes(), &a)
+
+	assert.Equal(t, 0, len(a))
+
+	w = httptest.NewRecorder()
+	req, _ = http.NewRequest(http.MethodGet, "/sensors/1/data?density=2&start_date=2019-10-01 00:00:00&end_date=2019-10-01 00:00:00", nil)
+	r.ServeHTTP(w, req)
+
+	assert.Equal(t, 200, w.Code)
+	_ = json.Unmarshal(w.Body.Bytes(), &a)
+
+	assert.Equal(t, 0, len(a))
+	assert.NotEqual(t, nil, a)
 }
 
 func TestQuerySensorDataDensityOutOfRange(t *testing.T) {
