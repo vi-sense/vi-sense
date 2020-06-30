@@ -151,7 +151,7 @@ func QuerySensorData(c *gin.Context) (int, string) {
 		fmt.Sprintf("Data density is out of its range [1-16] value=%d.", density)})
 	}
 
-	var result []Data
+	result := make([]Data, 0)
 	if density != 1 {
 		for i := 0; i < len(r); i += density {
 			result = append(result, r[i])
