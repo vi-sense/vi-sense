@@ -17,6 +17,12 @@ import (
 	_ "github.com/jinzhu/gorm/dialects/sqlite"
 )
 
+type Location struct {
+	Address   string  `json:"address"`
+	Latitude  float64 `json:"latitude"`
+	Longitude float64 `json:"longitude"`
+}
+
 //RoomModel specifies the structure for a single BIM model
 type RoomModel struct {
 	ID       uint     `json:"id"`
@@ -25,7 +31,7 @@ type RoomModel struct {
 	Url      string   `json:"url"`
 	ImageUrl string   `json:"image_url"`
 	Type     string   `json:"type"`
-	Location string   `json:"location"`
+	Location Location `json:"location" gorm:"embedded"`
 	Floors   int      `json:"floors"`
 }
 
@@ -92,12 +98,12 @@ func SetupDatabase(drop bool) {
 	}
 
 	if drop {
-		DB.DropTableIfExists(&RoomModel{}, &Sensor{}, &Data{})
+		DB.DropTableIfExists(&RoomModel{}, &Sensor{}, &Data{}, &Location{})
 		fmt.Println("[✓] all data successfully dropped")
 	}
 
 	// Migrate the Schema
-	DB.AutoMigrate(&RoomModel{}, &Sensor{}, &Data{})
+	DB.AutoMigrate(&RoomModel{}, &Sensor{}, &Data{}, &Location{})
 	fmt.Println("[✓] schemes migrated")
 }
 
