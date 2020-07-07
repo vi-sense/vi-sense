@@ -18,7 +18,7 @@ import (
 //@Router /models [get]
 func QueryRoomModels() (int, string) {
 	var q []RoomModel
-	DB.Find(&q)
+	DB.Preload("Sensors").Find(&q)
 	return http.StatusOK, AsJSON(&q)
 }
 
