@@ -2,11 +2,9 @@
 
 vi-sense is a project of the University of Applied Sciences (HTW) Berlin and metr.systems to visualize IoT data in BIM Models.
 
-this repo contains sample data for the visense project, consisting of 3D gltf models and sensor data.
+Vi-Sense is a project that visualizes data of heating systems in a 3D model of the building they’re installed in. Technicians or system administrators get an overview of all sensors located in a building, can take a closer look at the measured values of these sensors, and get information about data anomalies that indicate potential errors. The combination of the 3D representation of buildings and the visualization of measured values in a timeline makes it possible to perform detailed analyses of error sources such as the failure of heating or pump systems. In addition, sensor states in the building model are supported by color highlighting, which ensures a quick orientation and an intuitive overview. In short, the goal of Vi-Sense is to give technicians and building managers a clear overview of their properties and the sensor technology they use.
 
-The aim of vi-sense is to develop a solution for visualizing IoT sensors and their data in 3D building models. We will bring together two cutting edge technologies: Building Information Modeling (BIM) and Internet of Things (IoT) to find a way to represent sensors in 3D space and visualize their data in a comprehensible way to maintenance staff. We will look at different aspects of how to visualize pipes, ducts and sensors to make users understand how systems are connected and which role the element plays they are looking at. Each sensor will have a small dashboard presenting current values, time series and related sensors.
-
-![](https://github.com/vi-sense/sample-data/blob/master/image.png)
+![screenshot](https://raw.githubusercontent.com/vi-sense/sample-data/master/preview/vi-sense-screenshot02.png)
 
 # Installation
 
