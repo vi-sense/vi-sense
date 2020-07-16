@@ -10,10 +10,8 @@ import (
 )
 
 func main() {
-	SetupDatabase(true)
-
-	LoadModels("/sample-data", []string{"berlin", "cape-town", "puerto-natales"}, -1)
-
+	SetupDatabase(false)
+	//LoadModels("/sample-data", []string{"berlin", "cape-town", "puerto-natales"}, -1)
 	//check if bind mount is working
 	dat, err := ioutil.ReadFile("/sample-data/info.txt")
 	if err != nil {
